@@ -36,14 +36,39 @@
     <div id="loading-spinner" class="fixed inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center z-50">
         <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-4 border-blue-500 border-opacity-75"></div>
     </div>
+    
+    <!-- Login/Signup Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-40 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 id="auth-modal-title" class="text-2xl font-bold text-center mb-6 text-gray-800">Sign in</h3>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="auth-email" class="block text-sm font-medium text-gray-700">Email address</label>
+                    <input type="email" id="auth-email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="auth-password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="auth-password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <button type="submit" id="auth-submit-btn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200">Sign in</button>
+            </form>
+            <p id="auth-toggle-link" class="text-center text-sm mt-4 text-gray-600 cursor-pointer">
+                Don't have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign up</span>
+            </p>
+        </div>
+    </div>
 
-    <main id="app-container" class="container bg-white rounded-xl shadow-lg m-4 p-6 flex-grow relative hidden">
+    <!-- Main App Container -->
+    <div id="app-container" class="container bg-white rounded-xl shadow-lg m-4 p-6 flex-grow relative hidden">
 
         <!-- Header and User Info -->
         <header class="flex justify-between items-center mb-6">
             <h1 class="text-3xl font-bold text-gray-800">My Portfolio</h1>
-            <div class="flex items-center space-x-2 bg-gray-50 text-gray-600 px-3 py-1 rounded-full text-sm">
-                <span id="user-id-display" class="truncate">Authenticating...</span>
+            <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-2 bg-gray-50 text-gray-600 px-3 py-1 rounded-full text-sm">
+                    <span id="user-id-display" class="truncate">Authenticating...</span>
+                </div>
+                <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 transition-colors duration-200 font-medium">Log out</button>
             </div>
         </header>
 
@@ -154,7 +179,7 @@
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
     <!-- Modal for Adding/Editing an Investment -->
     <div id="investment-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-40 hidden">
@@ -337,7 +362,7 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { Chart, DoughnutController, ArcElement, LineController, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend } from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/+esm';
 
@@ -347,7 +372,18 @@
         // --- Firebase & App State Initialization ---
         let app, db, auth, userId, unsubscribe;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // Firebase & App State Initialization
+		let app, db, auth, userId, unsubscribe;
+		const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Replace this with a unique ID for your app
+		const firebaseConfig = {
+		  apiKey: "AIzaSyBUkADc0TTBrM0STMhTLzA6htyYgiOdsro",
+		  authDomain: "investmenttracker-af126.firebaseapp.com",
+		  projectId: "yinvestmenttracker-af126",
+		  storageBucket: "investmenttracker-af126.firebasestorage.app",
+		  messagingSenderId: "782078886994",
+		  appId: "1:782078886994:web:8d02aed4ddd2f62b198b8b",
+		  measurementId: "G-NVNMZPPC3H"
+		};
 
         let transactionsData = [];
         let groupedHoldings = {};
@@ -355,11 +391,18 @@
         let priceChart = null;
         let currentFilter = 'all';
         let currentTxType = 'Buy';
-        let isAuthReady = false;
 
         // --- DOM Elements ---
         const loadingSpinner = document.getElementById('loading-spinner');
         const appContainer = document.getElementById('app-container');
+        const authModal = document.getElementById('auth-modal');
+        const authModalTitle = document.getElementById('auth-modal-title');
+        const authForm = document.getElementById('auth-form');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const authToggleLink = document.getElementById('auth-toggle-link');
+        const logoutBtn = document.getElementById('logout-btn');
         const userIdDisplay = document.getElementById('user-id-display');
         const profileUserIdDisplay = document.getElementById('profile-user-id');
         const navItems = document.querySelectorAll('.nav-item');
@@ -494,8 +537,8 @@
         // --- App Initialization and Authentication ---
         window.onload = function() {
             try {
-                initializeApp(firebaseConfig);
-                auth = getAuth();
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
                 db = getFirestore(app);
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
@@ -503,24 +546,20 @@
             }
             
             // Handle authentication state
-            onAuthStateChanged(auth, async (user) => {
+            onAuthStateChanged(auth, (user) => {
+                loadingSpinner.classList.add('hidden');
                 if (user) {
                     userId = user.uid;
-                    isAuthReady = true;
+                    appContainer.classList.remove('hidden');
+                    authModal.classList.add('hidden');
                     userIdDisplay.textContent = userId.length > 10 ? userId.substring(0, 10) + '...' : userId;
                     profileUserIdDisplay.textContent = userId;
-                    loadingSpinner.classList.add('hidden');
-                    appContainer.classList.remove('hidden');
                     listenForTransactions();
                 } else {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase auth failed:", error);
+                    appContainer.classList.add('hidden');
+                    authModal.classList.remove('hidden');
+                    if (unsubscribe) {
+                         unsubscribe();
                     }
                 }
             });
@@ -1107,6 +1146,56 @@
                 currentFilter = btn.dataset.filter;
                 renderPortfolio();
             });
+        });
+
+        // --- AUTHENTICATION LOGIC ---
+        let isSigningUp = false;
+
+        authToggleLink.addEventListener('click', () => {
+            isSigningUp = !isSigningUp;
+            authModalTitle.textContent = isSigningUp ? 'Sign up' : 'Sign in';
+            authSubmitBtn.textContent = isSigningUp ? 'Sign up' : 'Sign in';
+            authToggleLink.innerHTML = isSigningUp ? 'Already have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign in</span>' : 'Don\'t have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign up</span>';
+        });
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            authSubmitBtn.disabled = true;
+            authSubmitBtn.textContent = 'Loading...';
+
+            try {
+                if (isSigningUp) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+            } catch (error) {
+                let errorMessage = 'An unexpected error occurred.';
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = 'Email already in use. Please sign in or use a different email.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Invalid email address.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = 'Password is too weak. Please choose a stronger password.';
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMessage = 'Invalid email or password.';
+                }
+                showMessageBox(errorMessage);
+            } finally {
+                authSubmitBtn.disabled = false;
+                authSubmitBtn.textContent = isSigningUp ? 'Sign up' : 'Sign in';
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                showMessageBox("You have been logged out successfully.");
+            } catch (error) {
+                showMessageBox("Failed to log out. Please try again.");
+            }
         });
     </script>
 </body>
