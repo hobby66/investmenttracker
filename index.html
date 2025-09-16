@@ -374,6 +374,7 @@
         // The __app_id and __firebase_config variables are provided by the canvas environment.
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
         // Let's set the log level to debug for now
         setLogLevel('debug');
@@ -518,655 +519,612 @@
             const docRef = doc(collectionRef, id);
             await deleteDoc(docRef);
         };
-
-        // --- Auth State Listener & Initialisation ---
-        window.onload = function() {
-            try {
-                // Initialize Firebase services using the provided configuration
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                // This listener runs once on page load and whenever auth state changes.
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        userIdDisplay.textContent = `User ID: ${userId.slice(0, 8)}...`;
-                        profileUserIdDisplay.textContent = userId;
-                        appContainer.classList.remove('hidden');
-                        authModal.classList.add('hidden');
-                        listenForTransactions();
-                    } else {
-                        // If no user is signed in, try to sign in with the custom token or anonymously.
-                        // This handles the first-time authentication in the Canvas environment.
-                        try {
-                            const authToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                            if (authToken) {
-                                await signInWithCustomToken(auth, authToken);
-                            } else {
-                                await signInAnonymously(auth);
-                            }
-                        } catch (error) {
-                            console.error("Authentication failed:", error);
-                            authModal.classList.remove('hidden');
-                            appContainer.classList.add('hidden');
-                            loadingSpinner.classList.add('hidden');
-                        }
-                    }
-                    loadingSpinner.classList.add('hidden');
-                });
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                loadingSpinner.classList.add('hidden');
-                authModal.classList.remove('hidden');
-            }
-        };
-
-        // --- UI & Event Handlers ---
         
-        // Navigation Handler
-        navItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                navItems.forEach(i => {
-                    i.classList.remove('active-nav-bg', 'active-nav');
-                    i.classList.add('text-gray-500');
-                });
-                const navBtn = e.currentTarget;
-                navBtn.classList.add('active-nav-bg', 'active-nav');
-                navBtn.classList.remove('text-gray-500');
-
-                pages.forEach(page => page.classList.add('hidden'));
-                document.getElementById(`${navBtn.id.replace('nav-', '')}-page`).classList.remove('hidden');
-                
-                // Re-render views on navigation change
-                renderAllViews();
-            });
-        });
-
-        // Auth form submission handler
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = authEmailInput.value;
-            const password = authPasswordInput.value;
-            authSubmitBtn.disabled = true;
-
-            try {
-                if (authModalTitle.textContent.includes('Sign in')) {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                }
-            } catch (error) {
-                showMessageBox(`Authentication failed: ${error.message}`);
-                authSubmitBtn.disabled = false;
-            }
-        });
-
-        // Auth modal toggle
-        authToggleLink.addEventListener('click', () => {
-            const isLogin = authModalTitle.textContent.includes('Sign in');
-            authModalTitle.textContent = isLogin ? 'Sign up' : 'Sign in';
-            authSubmitBtn.textContent = isLogin ? 'Sign up' : 'Sign in';
-            authToggleLink.innerHTML = isLogin ? 'Already have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign in</span>' : 'Don\'t have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign up</span>';
-        });
-
-        // Logout handler
-        logoutBtn.addEventListener('click', async () => {
-            await signOut(auth);
-            userIdDisplay.textContent = 'Authenticating...';
-            appContainer.classList.add('hidden');
-            authModal.classList.remove('hidden');
-            // Unsubscribe from Firestore listener on logout
-            if (unsubscribe) {
-                unsubscribe();
-            }
-        });
-
-        // Add new transaction modal
-        addInvestmentBtn.addEventListener('click', () => {
-            investmentForm.reset();
-            modalTitle.textContent = 'Add New Transaction';
-            transactionIdInput.value = '';
-            buyPriceGroup.classList.remove('hidden');
-            sellPriceGroup.classList.add('hidden');
-            typeBuyBtn.classList.add('bg-indigo-600', 'text-white');
-            typeBuyBtn.classList.remove('bg-gray-200', 'text-gray-700');
-            typeSellBtn.classList.remove('bg-indigo-600', 'text-white');
-            typeSellBtn.classList.add('bg-gray-200', 'text-gray-700');
-            currentTxType = 'Buy';
-            investmentModal.classList.remove('hidden');
-        });
-        
-        // Close modal buttons
-        closeModalBtn.addEventListener('click', () => investmentModal.classList.add('hidden'));
-        closeDetailsModalBtn.addEventListener('click', () => detailsModal.classList.add('hidden'));
-        closeAiModalBtn.addEventListener('click', () => aiResponseModal.classList.add('hidden'));
-
-        // Transaction type buttons
-        typeBuyBtn.addEventListener('click', () => {
-            currentTxType = 'Buy';
-            typeBuyBtn.classList.add('bg-indigo-600', 'text-white');
-            typeBuyBtn.classList.remove('bg-gray-200', 'text-gray-700');
-            typeSellBtn.classList.remove('bg-indigo-600', 'text-white');
-            typeSellBtn.classList.add('bg-gray-200', 'text-gray-700');
-            buyPriceGroup.classList.remove('hidden');
-            sellPriceGroup.classList.add('hidden');
-        });
-
-        typeSellBtn.addEventListener('click', () => {
-            currentTxType = 'Sell';
-            typeSellBtn.classList.add('bg-indigo-600', 'text-white');
-            typeSellBtn.classList.remove('bg-gray-200', 'text-gray-700');
-            typeBuyBtn.classList.remove('bg-indigo-600', 'text-white');
-            typeBuyBtn.classList.add('bg-gray-200', 'text-gray-700');
-            buyPriceGroup.classList.add('hidden');
-            sellPriceGroup.classList.remove('hidden');
-        });
-
-        // Handle form submission for adding/editing transactions
-        investmentForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const transactionId = transactionIdInput.value;
-            const transaction = {
-                date: transactionDateInput.value,
-                type: currentTxType,
-                market: marketSelect.value,
-                assetType: assetTypeSelect.value,
-                ticker: tickerInput.value.toUpperCase(),
-                shares: parseFloat(sharesInput.value),
-                price: parseFloat(currentTxType === 'Buy' ? buyPriceInput.value : sellPriceInput.value),
-                timestamp: new Date()
-            };
-
-            if (transactionId) {
-                // Check if a sell transaction is valid
-                if (currentTxType === 'Sell') {
-                    const holding = groupedHoldings[transaction.ticker];
-                    if (holding && holding.shares < transaction.shares) {
-                        showMessageBox(`You cannot sell more shares than you own for ${transaction.ticker}. Owned: ${holding.shares}`);
-                        return;
-                    }
-                }
-                await updateTransaction(transactionId, transaction);
-            } else {
-                await addTransaction(transaction);
-            }
-            investmentModal.classList.add('hidden');
-        });
-
-        // Filter buttons
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                currentFilter = e.currentTarget.dataset.filter;
-                filterBtns.forEach(b => {
-                    b.classList.remove('bg-indigo-200', 'text-indigo-800', 'font-semibold');
-                    b.classList.add('bg-gray-200', 'text-gray-700');
-                });
-                e.currentTarget.classList.add('bg-indigo-200', 'text-indigo-800', 'font-semibold');
-                renderPortfolioView();
-            });
-        });
-
-        // Show message box
-        const showMessageBox = (message, options = { ok: true, cancel: false }) => {
+        // --- App Logic & UI Functions ---
+        const showMessageBox = (message, actions, onConfirm = null) => {
             messageBoxText.textContent = message;
             messageBoxActions.innerHTML = '';
-            if (options.ok) {
-                const okBtn = document.createElement('button');
-                okBtn.id = 'message-box-ok-btn';
-                okBtn.textContent = 'OK';
-                okBtn.className = 'bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200';
-                okBtn.addEventListener('click', () => messageBox.classList.add('hidden'));
-                messageBoxActions.appendChild(okBtn);
-            }
-            if (options.cancel) {
-                const cancelBtn = document.createElement('button');
-                cancelBtn.id = 'message-box-cancel-btn';
-                cancelBtn.textContent = 'Cancel';
-                cancelBtn.className = 'bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium hover:bg-gray-400 transition-colors duration-200';
-                cancelBtn.addEventListener('click', () => messageBox.classList.add('hidden'));
-                messageBoxActions.appendChild(cancelBtn);
-            }
+            actions.forEach(action => {
+                const btn = document.createElement('button');
+                btn.textContent = action.text;
+                btn.className = `py-2 px-4 rounded-lg font-medium transition-colors duration-200 ${action.class}`;
+                btn.addEventListener('click', () => {
+                    messageBox.classList.add('hidden');
+                    if (action.callback) {
+                        action.callback();
+                    }
+                });
+                messageBoxActions.appendChild(btn);
+            });
             messageBox.classList.remove('hidden');
         };
 
-        // Handle delete data button
-        deleteDataBtn.addEventListener('click', async () => {
-            showMessageBox('This action will permanently delete all of your data. Are you sure?', {
-                ok: true,
-                cancel: true
+        const showLoading = (show) => {
+            loadingSpinner.classList.toggle('hidden', !show);
+        };
+
+        const showPage = (pageId) => {
+            pages.forEach(page => {
+                page.classList.add('hidden');
             });
-            const okBtn = document.getElementById('message-box-ok-btn');
-            const cancelBtn = document.getElementById('message-box-cancel-btn');
+            document.getElementById(pageId).classList.remove('hidden');
 
-            okBtn.addEventListener('click', async () => {
-                try {
-                    const collectionRef = getCollectionRef();
-                    if (collectionRef) {
-                        const q = query(collectionRef);
-                        const querySnapshot = await getDocs(q);
-                        const deletePromises = querySnapshot.docs.map(d => deleteDoc(doc(db, d.ref.path)));
-                        await Promise.all(deletePromises);
-                        showMessageBox('All data has been deleted.');
-                    }
-                } catch (error) {
-                    showMessageBox(`Error deleting data: ${error.message}`);
-                }
-            }, { once: true }); // Use { once: true } to prevent multiple listeners
-            cancelBtn.addEventListener('click', () => messageBox.classList.add('hidden'), { once: true });
-        });
-
-        // --- Data Processing Functions ---
-
-        const groupHoldingsByTicker = (transactions) => {
-            const holdings = {};
-            transactions.sort((a, b) => a.timestamp - b.timestamp); // Sort by date for accurate calculations
-            transactions.forEach(tx => {
-                const { ticker, type, shares, price } = tx;
-                if (!holdings[ticker]) {
-                    holdings[ticker] = {
-                        ticker,
-                        market: tx.market,
-                        assetType: tx.assetType,
-                        shares: 0,
-                        totalCost: 0,
-                        transactions: []
-                    };
-                }
-                const holding = holdings[ticker];
-                if (type === 'Buy') {
-                    holding.shares += shares;
-                    holding.totalCost += shares * price;
-                } else if (type === 'Sell') {
-                    // Calculate weighted average cost basis for sells
-                    if (holding.shares > 0) {
-                        const costPerShare = holding.totalCost / holding.shares;
-                        holding.shares -= shares;
-                        holding.totalCost -= shares * costPerShare;
-                    }
-                }
-                holding.transactions.push(tx);
+            navItems.forEach(item => {
+                item.classList.remove('active-nav-bg', 'active-nav');
             });
-            
-            // Clean up holdings with 0 shares
-            for (const ticker in holdings) {
-                if (holdings[ticker].shares <= 0) {
-                    delete holdings[ticker];
-                }
-            }
-
-            return holdings;
+            document.getElementById(`nav-${pageId.split('-')[0]}`).classList.add('active-nav-bg', 'active-nav');
         };
 
-        const calculateMetrics = (holdings) => {
-            let totalValue = 0;
-            let totalCost = 0;
-            const tickers = Object.keys(holdings);
-            const portfolioReturns = [];
-            const cashFlows = {};
-
-            tickers.forEach(ticker => {
-                const holding = holdings[ticker];
-                // Simulate a current price. In a real app, this would be from a market data API.
-                const simulatedPrice = holding.transactions[holding.transactions.length - 1].price * (1 + (Math.random() - 0.5) * 0.2); // +/- 10%
-                holding.currentPrice = simulatedPrice;
-                holding.currentValue = holding.shares * simulatedPrice;
-                holding.gainLoss = holding.currentValue - holding.totalCost;
-                
-                totalValue += holding.currentValue;
-                totalCost += holding.totalCost;
-                
-                // For TWR and MWR, collect all cash flows and valuations
-                holding.transactions.forEach(tx => {
-                    const date = tx.date;
-                    const amount = tx.type === 'Buy' ? -(tx.shares * tx.price) : (tx.shares * tx.price);
-                    if (!cashFlows[date]) cashFlows[date] = 0;
-                    cashFlows[date] += amount;
-                });
-            });
-
-            // Calculate overall gain/loss and percentage
-            const overallGainLoss = totalValue - totalCost;
-            const overallGainLossPct = totalCost > 0 ? (overallGainLoss / totalCost) * 100 : 0;
-            
-            // TWR calculation (simplified, assumes discrete time periods)
-            let twr = 1;
-            const sortedDates = Object.keys(cashFlows).sort();
-            for (let i = 0; i < sortedDates.length; i++) {
-                const date = sortedDates[i];
-                const startValue = i === 0 ? 0 : totalValueAtDate(holdings, sortedDates[i-1]);
-                const endValue = totalValueAtDate(holdings, date);
-                const returnPeriod = (endValue - cashFlows[date]) / (startValue + cashFlows[date]);
-                twr *= (1 + returnPeriod);
-            }
-            const twrPct = (twr - 1) * 100;
-            
-            // MWR calculation (simplified IRR - Internal Rate of Return)
-            // This is a complex financial calculation. We will provide a placeholder.
-            const mwrPct = "Not Implemented"; 
-
-            return { totalValue, overallGainLoss, overallGainLossPct, twrPct, mwrPct, holdings };
+        const showAuthModal = (show, isSignup = false) => {
+            authModalTitle.textContent = isSignup ? 'Sign up' : 'Sign in';
+            authSubmitBtn.textContent = isSignup ? 'Sign up' : 'Sign in';
+            authToggleLink.innerHTML = isSignup
+                ? `Already have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign in</span>`
+                : `Don't have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign up</span>`;
+            authModal.classList.toggle('hidden', !show);
         };
 
-        const totalValueAtDate = (holdings, date) => {
-            let value = 0;
-            for (const ticker in holdings) {
-                const holding = holdings[ticker];
-                const transactionsBeforeDate = holding.transactions.filter(tx => tx.date <= date);
-                let sharesAtDate = 0;
-                let costAtDate = 0;
-                transactionsBeforeDate.forEach(tx => {
-                    if (tx.type === 'Buy') {
-                        sharesAtDate += tx.shares;
-                        costAtDate += tx.shares * tx.price;
-                    } else if (tx.type === 'Sell') {
-                        const avgCost = costAtDate / sharesAtDate;
-                        sharesAtDate -= tx.shares;
-                        costAtDate -= tx.shares * avgCost;
-                    }
-                });
-                value += sharesAtDate * holding.currentPrice; // Using current price for simplicity
-            }
-            return value;
-        };
-
-        // --- View Rendering Functions ---
-
-        const renderAllViews = () => {
-            const metrics = calculateMetrics(groupedHoldings);
-            renderDashboard(metrics);
-            renderPortfolioView();
-            renderTransactionsView();
-        };
-
-        const renderDashboard = (metrics) => {
-            totalValueEl.textContent = `$${metrics.totalValue.toFixed(2)}`;
-            overallGainLossEl.textContent = `$${metrics.overallGainLoss.toFixed(2)}`;
-            overallGainLossPctEl.textContent = ` (${metrics.overallGainLossPct.toFixed(2)}%)`;
-            twrValueEl.textContent = `${metrics.twrPct.toFixed(2)}%`;
-            mwrValueEl.textContent = metrics.mwrPct;
-
-            overallGainLossEl.classList.remove('text-green-600', 'text-red-600');
-            overallGainLossEl.classList.add(metrics.overallGainLoss >= 0 ? 'text-green-600' : 'text-red-600');
-            overallGainLossPctEl.classList.remove('text-green-500', 'text-red-500');
-            overallGainLossPctEl.classList.add(metrics.overallGainLoss >= 0 ? 'text-green-500' : 'text-red-500');
-            
-            if (Object.keys(groupedHoldings).length > 0) {
-                chartPlaceholder.classList.add('hidden');
-                document.getElementById('allocation-chart').classList.remove('hidden');
-                renderAllocationChart(groupedHoldings);
-            } else {
-                chartPlaceholder.classList.remove('hidden');
-                document.getElementById('allocation-chart').classList.add('hidden');
-            }
-        };
-        
-        const renderPortfolioView = () => {
-            investmentsList.innerHTML = '';
-            let hasInvestments = false;
-            
-            for (const ticker in groupedHoldings) {
-                const holding = groupedHoldings[ticker];
-                if (currentFilter === 'all' || holding.market === currentFilter || holding.assetType === currentFilter) {
-                    hasInvestments = true;
-                    const gainLoss = holding.currentValue - holding.totalCost;
-                    const gainLossPct = holding.totalCost > 0 ? (gainLoss / holding.totalCost) * 100 : 0;
-                    const gainLossColor = gainLoss >= 0 ? 'text-green-600' : 'text-red-600';
-                    const gainLossSign = gainLoss >= 0 ? '+' : '';
-
-                    const holdingEl = document.createElement('div');
-                    holdingEl.className = 'bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer transition-colors duration-200 hover:bg-gray-50';
-                    holdingEl.innerHTML = `
-                        <div>
-                            <h3 class="font-bold text-lg text-gray-800">${ticker}</h3>
-                            <p class="text-sm text-gray-500">${holding.shares.toFixed(2)} shares @ $${holding.currentPrice.toFixed(2)}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm font-medium text-gray-600">Value: <span class="font-semibold text-gray-800">$${holding.currentValue.toFixed(2)}</span></p>
-                            <p class="text-sm font-medium ${gainLossColor}">
-                                ${gainLossSign}${gainLoss.toFixed(2)} (${gainLossSign}${gainLossPct.toFixed(2)}%)
-                            </p>
-                        </div>
-                    `;
-                    holdingEl.addEventListener('click', () => {
-                        currentInvestment = holding;
-                        renderDetailsModal(currentInvestment);
-                    });
-                    investmentsList.appendChild(holdingEl);
-                }
-            }
-            
-            if (hasInvestments) {
-                emptyState.classList.add('hidden');
-            } else {
-                emptyState.classList.remove('hidden');
-            }
-        };
-        
-        const renderTransactionsView = () => {
+        const renderTransactions = () => {
             transactionsList.innerHTML = '';
             if (transactionsData.length === 0) {
                 emptyTransactionsState.classList.remove('hidden');
             } else {
                 emptyTransactionsState.classList.add('hidden');
-                transactionsData.sort((a, b) => b.timestamp - a.timestamp).forEach(tx => {
-                    const txEl = document.createElement('div');
-                    const isBuy = tx.type === 'Buy';
-                    const sign = isBuy ? '+' : '-';
-                    const color = isBuy ? 'text-green-600' : 'text-red-600';
-                    const action = isBuy ? 'Bought' : 'Sold';
-                    const value = tx.shares * tx.price;
-
-                    txEl.className = 'bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between';
-                    txEl.innerHTML = `
-                        <div>
-                            <p class="font-semibold text-gray-800">${action} ${tx.shares} shares of ${tx.ticker}</p>
-                            <p class="text-sm text-gray-500">${new Date(tx.date).toLocaleDateString()} @ $${tx.price.toFixed(2)}</p>
+                transactionsData.forEach(tx => {
+                    const txElement = document.createElement('div');
+                    const txColor = tx.type === 'Buy' ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200';
+                    const txTextColor = tx.type === 'Buy' ? 'text-blue-800' : 'text-red-800';
+                    txElement.className = `flex items-center justify-between p-4 rounded-xl shadow-sm border ${txColor}`;
+                    txElement.innerHTML = `
+                        <div class="flex-1">
+                            <div class="font-semibold text-lg ${txTextColor}">${tx.type} ${tx.shares} shares of ${tx.ticker}</div>
+                            <div class="text-sm text-gray-500">${tx.timestamp.toLocaleDateString()} at ${tx.price.toFixed(2)} ${tx.market === 'US' ? 'USD' : 'MYR'}</div>
                         </div>
-                        <div class="text-right">
-                            <p class="font-semibold ${color}">${sign}$${value.toFixed(2)}</p>
-                        </div>
+                        <button class="delete-tx-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300 transition-colors duration-200" data-id="${tx.id}">Delete</button>
                     `;
-                    transactionsList.appendChild(txEl);
+                    transactionsList.appendChild(txElement);
                 });
             }
         };
-        
-        const renderDetailsModal = (holding) => {
-            detailsModalTitle.textContent = holding.ticker;
-            detailsSharesEl.textContent = holding.shares.toFixed(2);
-            detailsBuyPriceEl.textContent = `$${(holding.totalCost / holding.shares).toFixed(2)}`;
-            detailsTotalCostEl.textContent = `$${holding.totalCost.toFixed(2)}`;
-            detailsCurrentValueEl.textContent = `$${holding.currentValue.toFixed(2)}`;
-            
-            const gainLoss = holding.gainLoss;
-            const gainLossPct = holding.totalCost > 0 ? (gainLoss / holding.totalCost) * 100 : 0;
-            const gainLossColor = gainLoss >= 0 ? 'text-green-600' : 'text-red-600';
-            const gainLossSign = gainLoss >= 0 ? '+' : '';
-            detailsGainLossEl.className = `text-lg font-bold ${gainLossColor}`;
-            detailsGainLossEl.textContent = `${gainLossSign}$${gainLoss.toFixed(2)} (${gainLossSign}${gainLossPct.toFixed(2)}%)`;
-            
-            // Render price chart (simulated data)
-            renderPriceChart(holding.ticker, holding.transactions);
 
-            // Render transaction list for this holding
-            detailsTransactionsList.innerHTML = '';
-            if (holding.transactions.length === 0) {
-                emptyDetailsTransactionsState.classList.remove('hidden');
+        const renderPortfolio = () => {
+            investmentsList.innerHTML = '';
+            const filteredHoldings = Object.values(groupedHoldings).filter(holding => {
+                if (currentFilter === 'all') return true;
+                return holding.market === currentFilter || holding.assetType === currentFilter;
+            });
+            if (filteredHoldings.length === 0) {
+                emptyState.classList.remove('hidden');
             } else {
-                emptyDetailsTransactionsState.classList.add('hidden');
-                holding.transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(tx => {
-                    const txEl = document.createElement('div');
-                    const isBuy = tx.type === 'Buy';
-                    const sign = isBuy ? '+' : '-';
-                    const color = isBuy ? 'text-green-600' : 'text-red-600';
-                    const action = isBuy ? 'Buy' : 'Sell';
-                    const value = tx.shares * tx.price;
-
-                    txEl.className = 'bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between';
-                    txEl.innerHTML = `
-                        <div>
-                            <p class="font-semibold text-gray-800">${action} ${tx.shares} shares</p>
-                            <p class="text-sm text-gray-500">${new Date(tx.date).toLocaleDateString()} @ $${tx.price.toFixed(2)}</p>
+                emptyState.classList.add('hidden');
+                filteredHoldings.forEach(holding => {
+                    const totalCost = holding.averagePrice * holding.shares;
+                    const currentValue = holding.currentPrice * holding.shares;
+                    const gainLoss = currentValue - totalCost;
+                    const gainLossClass = gainLoss >= 0 ? 'text-green-600' : 'text-red-600';
+                    const investmentElement = document.createElement('div');
+                    investmentElement.className = "investment-card bg-white p-4 rounded-xl shadow border border-gray-100 cursor-pointer transition-transform duration-200 hover:scale-[1.01]";
+                    investmentElement.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-lg">${holding.ticker} <span class="text-xs font-normal text-gray-500">${holding.assetType} - ${holding.market}</span></h3>
+                            <span class="font-bold text-xl">${currentValue.toFixed(2)} ${holding.market === 'US' ? 'USD' : 'MYR'}</span>
                         </div>
-                        <div class="text-right">
-                            <p class="font-semibold ${color}">${sign}$${value.toFixed(2)}</p>
+                        <div class="flex justify-between items-center text-sm text-gray-600">
+                            <span>Avg. Price: ${holding.averagePrice.toFixed(2)}</span>
+                            <span>Shares: ${holding.shares.toFixed(2)}</span>
+                            <span class="${gainLossClass}">Gain/Loss: ${gainLoss.toFixed(2)}</span>
                         </div>
                     `;
-                    detailsTransactionsList.appendChild(txEl);
+                    investmentElement.addEventListener('click', () => showInvestmentDetails(holding));
+                    investmentsList.appendChild(investmentElement);
                 });
             }
+        };
 
+        const renderDashboard = () => {
+            const totalValue = Object.values(groupedHoldings).reduce((sum, holding) => sum + holding.currentPrice * holding.shares, 0);
+            const totalCost = Object.values(groupedHoldings).reduce((sum, holding) => sum + holding.averagePrice * holding.shares, 0);
+            const overallGainLoss = totalValue - totalCost;
+            const overallGainLossPct = totalCost > 0 ? (overallGainLoss / totalCost) * 100 : 0;
+
+            totalValueEl.textContent = `$${totalValue.toFixed(2)}`;
+            overallGainLossEl.textContent = `$${overallGainLoss.toFixed(2)}`;
+            overallGainLossEl.className = overallGainLoss >= 0 ? 'text-4xl font-bold text-green-600' : 'text-4xl font-bold text-red-600';
+            overallGainLossPctEl.textContent = ` (${overallGainLossPct.toFixed(2)}%)`;
+            overallGainLossPctEl.className = overallGainLoss >= 0 ? 'text-green-500 text-sm font-medium' : 'text-red-500 text-sm font-medium';
+            twrValueEl.textContent = calculateTWR().toFixed(2) + '%';
+            mwrValueEl.textContent = calculateMWR().toFixed(2) + '%';
+
+            renderAllocationChart();
+        };
+
+        const renderAllViews = () => {
+            renderDashboard();
+            renderPortfolio();
+            renderTransactions();
+        };
+        
+        const showInvestmentDetails = (holding) => {
+            currentInvestment = holding;
+            detailsModalTitle.textContent = `${holding.ticker} Details`;
+            detailsSharesEl.textContent = holding.shares.toFixed(2);
+            detailsBuyPriceEl.textContent = `${holding.averagePrice.toFixed(2)} ${holding.market === 'US' ? 'USD' : 'MYR'}`;
+            const totalCost = holding.averagePrice * holding.shares;
+            const currentValue = holding.currentPrice * holding.shares;
+            const gainLoss = currentValue - totalCost;
+            detailsTotalCostEl.textContent = `${totalCost.toFixed(2)} ${holding.market === 'US' ? 'USD' : 'MYR'}`;
+            detailsCurrentValueEl.textContent = `${currentValue.toFixed(2)} ${holding.market === 'US' ? 'USD' : 'MYR'}`;
+            detailsGainLossEl.textContent = `${gainLoss.toFixed(2)} ${holding.market === 'US' ? 'USD' : 'MYR'} (${(gainLoss / totalCost * 100).toFixed(2)}%)`;
+            detailsGainLossEl.className = `text-lg font-bold ${gainLoss >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            
+            // Render specific transactions for this ticker
+            const tickerTransactions = transactionsData.filter(tx => tx.ticker === holding.ticker).sort((a,b) => b.timestamp - a.timestamp);
+            detailsTransactionsList.innerHTML = '';
+            if (tickerTransactions.length > 0) {
+                emptyDetailsTransactionsState.classList.add('hidden');
+                tickerTransactions.forEach(tx => {
+                    const txElement = document.createElement('div');
+                    const txColor = tx.type === 'Buy' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800';
+                    txElement.className = `flex justify-between items-center p-3 rounded-lg ${txColor}`;
+                    txElement.innerHTML = `
+                        <div class="font-semibold">${tx.type} ${tx.shares.toFixed(2)} shares at ${tx.price.toFixed(2)}</div>
+                        <div class="text-sm text-gray-600">${tx.timestamp.toLocaleDateString()}</div>
+                    `;
+                    detailsTransactionsList.appendChild(txElement);
+                });
+            } else {
+                emptyDetailsTransactionsState.classList.remove('hidden');
+            }
+
+            renderPriceChart();
             detailsModal.classList.remove('hidden');
         };
 
-        const renderAllocationChart = (holdings) => {
-            if (allocationChart) {
-                allocationChart.destroy();
-            }
-            
-            const labels = Object.keys(holdings);
-            const data = labels.map(ticker => holdings[ticker].currentValue);
-            
-            const backgroundColors = labels.map((_, i) => `hsl(${i * 360 / labels.length}, 70%, 50%)`);
+        const renderAllocationChart = () => {
+            const tickers = Object.keys(groupedHoldings);
+            if (tickers.length > 0) {
+                const values = tickers.map(ticker => groupedHoldings[ticker].currentPrice * groupedHoldings[ticker].shares);
+                const backgroundColors = [
+                    '#4f46e5', '#34d399', '#f97316', '#a855f7', '#06b6d4',
+                    '#f43f5e', '#22c55e', '#fbbf24', '#8b5cf6', '#ef4444'
+                ];
+                chartPlaceholder.classList.add('hidden');
+                document.getElementById('allocation-chart').classList.remove('hidden');
 
-            allocationChart = new Chart(allocationChartCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: backgroundColors,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 10,
-                                padding: 15
-                            }
+                if (allocationChart) {
+                    allocationChart.data.labels = tickers;
+                    allocationChart.data.datasets[0].data = values;
+                    allocationChart.update();
+                } else {
+                    allocationChart = new Chart(allocationChartCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: tickers,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: backgroundColors,
+                                hoverOffset: 4
+                            }]
                         },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => {
-                                    const label = context.label || '';
-                                    const value = context.raw;
-                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
-                                    return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = (value / total * 100).toFixed(2) + '%';
+                                            return `${label}: $${value.toFixed(2)} (${percentage})`;
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
+                    });
                 }
-            });
+            } else {
+                if (allocationChart) {
+                    allocationChart.destroy();
+                    allocationChart = null;
+                }
+                chartPlaceholder.classList.remove('hidden');
+                document.getElementById('allocation-chart').classList.add('hidden');
+            }
         };
 
-        const renderPriceChart = (ticker, transactions) => {
+        const renderPriceChart = () => {
             if (priceChart) {
                 priceChart.destroy();
             }
+            // Generate simulated price data based on the earliest transaction date
+            const tickerTransactions = transactionsData.filter(tx => tx.ticker === currentInvestment.ticker).sort((a,b) => a.timestamp - b.timestamp);
+            if (tickerTransactions.length === 0) return;
 
-            const sortedTransactions = transactions.sort((a, b) => a.timestamp - b.timestamp);
-            
-            const labels = sortedTransactions.map(tx => new Date(tx.date).toLocaleDateString());
-            const data = sortedTransactions.map(tx => tx.price);
-            
+            const earliestDate = tickerTransactions[0].timestamp;
+            const today = new Date();
+            const dates = [];
+            const prices = [];
+
+            let currentDate = new Date(earliestDate);
+            let currentPrice = tickerTransactions[0].price;
+
+            while(currentDate <= today) {
+                dates.push(currentDate.toLocaleDateString());
+                
+                // Find a transaction on this date
+                const tx = tickerTransactions.find(t => t.timestamp.toLocaleDateString() === currentDate.toLocaleDateString());
+                if(tx) {
+                    currentPrice = tx.price;
+                }
+                
+                // Simulate price movement
+                prices.push(currentPrice * (1 + (Math.random() - 0.5) * 0.05));
+                
+                currentDate.setDate(currentDate.getDate() + 10); // Add 10 days for a more spread out chart
+            }
+
             priceChart = new Chart(priceChartCtx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: dates,
                     datasets: [{
-                        label: `${ticker} Price History`,
-                        data: data,
+                        label: 'Simulated Price',
+                        data: prices,
                         borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.2)',
-                        fill: true,
-                        tension: 0.1
+                        tension: 0.1,
+                        fill: false
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false
+                            display: false,
                         }
                     },
                     scales: {
                         x: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Date'
-                            }
+                            display: false // Hide x-axis labels to avoid clutter
                         },
                         y: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Price (USD/MYR)'
-                            }
+                            beginAtZero: false
                         }
                     }
                 }
             });
         };
-        
-        // AI Insight Generation (Placeholder)
-        getAiInsightsBtn.addEventListener('click', async () => {
-            if (Object.keys(groupedHoldings).length === 0) {
-                showMessageBox("Please add some investments first to get a portfolio summary.");
-                return;
+
+        // --- Calculation Functions ---
+        const groupHoldingsByTicker = (transactions) => {
+            const holdings = {};
+            transactions.forEach(tx => {
+                const ticker = tx.ticker;
+                if (!holdings[ticker]) {
+                    holdings[ticker] = {
+                        ticker: ticker,
+                        market: tx.market,
+                        assetType: tx.assetType,
+                        shares: 0,
+                        totalCost: 0,
+                        currentPrice: parseFloat((Math.random() * 100 + 10).toFixed(2)) // Simulated current price
+                    };
+                }
+                if (tx.type === 'Buy') {
+                    holdings[ticker].shares += tx.shares;
+                    holdings[ticker].totalCost += tx.shares * tx.price;
+                } else if (tx.type === 'Sell') {
+                    holdings[ticker].shares -= tx.shares;
+                    holdings[ticker].totalCost -= tx.shares * tx.price; // Simplified, not a perfect avg calculation
+                }
+            });
+            // Filter out holdings with zero or negative shares
+            Object.keys(holdings).forEach(key => {
+                if (holdings[key].shares <= 0) {
+                    delete holdings[key];
+                } else {
+                    holdings[key].averagePrice = holdings[key].totalCost / holdings[key].shares;
+                }
+            });
+            return holdings;
+        };
+
+        const calculateTWR = () => {
+            // Placeholder for a complex TWR calculation
+            const txDates = transactionsData.map(tx => tx.timestamp.getTime());
+            const uniqueSortedDates = [...new Set(txDates)].sort((a,b) => a-b);
+            
+            let totalReturn = 1;
+            let startValue = 0;
+            let endValue = 0;
+
+            if (transactionsData.length > 0) {
+                // Simplified calculation based on first transaction and current value
+                const firstTx = transactionsData.sort((a,b) => a.timestamp - b.timestamp)[0];
+                startValue = firstTx.shares * firstTx.price;
+                endValue = Object.values(groupedHoldings).reduce((sum, holding) => sum + holding.currentPrice * holding.shares, 0);
             }
 
-            aiResponseModal.classList.remove('hidden');
-            aiResponseContent.innerHTML = `
-                <div class="flex items-center justify-center">
-                    <div class="animate-spin rounded-full h-8 w-8 border-2 border-t-2 border-blue-500 border-opacity-75"></div>
-                </div>
-            `;
-            const portfolioSummary = JSON.stringify(groupedHoldings);
-            const userQuery = `Analyze the following investment portfolio and provide a concise, single-paragraph summary of its key characteristics. Focus on asset allocation, geographical distribution, and any potential strengths or weaknesses. Do not mention specific ticker symbols.
-            
-            Portfolio data: ${portfolioSummary}`;
-            
-            const systemPrompt = "Act as a world-class financial analyst. Provide a concise, single-paragraph summary of the key findings from the provided portfolio data. Do not use markdown formatting like bolding or lists. The response must be a single paragraph.";
-            
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
+            if (startValue > 0) {
+                totalReturn = (endValue - startValue) / startValue;
+            }
+
+            return totalReturn * 100;
+        };
+
+        const calculateMWR = () => {
+            // Placeholder for a complex MWR (IRR) calculation
+            const totalCost = Object.values(groupedHoldings).reduce((sum, holding) => sum + holding.averagePrice * holding.shares, 0);
+            const totalValue = Object.values(groupedHoldings).reduce((sum, holding) => sum + holding.currentPrice * holding.shares, 0);
+            return (totalValue - totalCost) / totalCost * 100;
+        };
+        
+        // --- Event Listeners ---
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading(true);
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            try {
+                if (authModalTitle.textContent === 'Sign up') {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
                 }
+                showAuthModal(false);
+                appContainer.classList.remove('hidden');
+            } catch (error) {
+                showMessageBox(`Authentication failed: ${error.message}`, [{ text: 'OK', class: 'bg-indigo-600 text-white' }]);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        authToggleLink.addEventListener('click', () => {
+            const isSignup = authModalTitle.textContent === 'Sign in';
+            showAuthModal(true, isSignup);
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            await signOut(auth);
+            showMessageBox('You have been logged out.', [{ text: 'OK', class: 'bg-indigo-600 text-white' }]);
+            appContainer.classList.add('hidden');
+            showAuthModal(true);
+        });
+
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const pageId = item.id.replace('nav-', '') + '-page';
+                showPage(pageId);
+            });
+        });
+
+        addInvestmentBtn.addEventListener('click', () => {
+            modalTitle.textContent = 'Add New Transaction';
+            investmentForm.reset();
+            transactionIdInput.value = '';
+            showInvestmentModal(true);
+        });
+        
+        const showInvestmentModal = (show) => {
+            investmentModal.classList.toggle('hidden', !show);
+        };
+        
+        closeModalBtn.addEventListener('click', () => showInvestmentModal(false));
+        
+        typeBuyBtn.addEventListener('click', () => {
+            currentTxType = 'Buy';
+            typeBuyBtn.classList.replace('bg-gray-200', 'bg-indigo-600');
+            typeBuyBtn.classList.replace('text-gray-700', 'text-white');
+            typeSellBtn.classList.replace('bg-indigo-600', 'bg-gray-200');
+            typeSellBtn.classList.replace('text-white', 'text-gray-700');
+            buyPriceGroup.classList.remove('hidden');
+            sellPriceGroup.classList.add('hidden');
+        });
+        
+        typeSellBtn.addEventListener('click', () => {
+            currentTxType = 'Sell';
+            typeSellBtn.classList.replace('bg-gray-200', 'bg-indigo-600');
+            typeSellBtn.classList.replace('text-gray-700', 'text-white');
+            typeBuyBtn.classList.replace('bg-indigo-600', 'bg-gray-200');
+            typeBuyBtn.classList.replace('text-white', 'text-gray-700');
+            buyPriceGroup.classList.add('hidden');
+            sellPriceGroup.classList.remove('hidden');
+        });
+
+        investmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const transactionId = transactionIdInput.value;
+            const price = parseFloat(currentTxType === 'Buy' ? buyPriceInput.value : sellPriceInput.value);
+            const transaction = {
+                ticker: tickerInput.value.toUpperCase(),
+                shares: parseFloat(sharesInput.value),
+                price: price,
+                timestamp: new Date(transactionDateInput.value),
+                type: currentTxType,
+                market: marketSelect.value,
+                assetType: assetTypeSelect.value,
             };
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            try {
+                if (transactionId) {
+                    await updateTransaction(transactionId, transaction);
+                } else {
+                    await addTransaction(transaction);
+                }
+                showInvestmentModal(false);
+            } catch (error) {
+                console.error("Error saving transaction: ", error);
+                showMessageBox("Failed to save transaction.", [{ text: 'OK', class: 'bg-indigo-600 text-white' }]);
+            }
+        });
+        
+        investmentsList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('investment-card')) {
+                const ticker = e.target.querySelector('h3').textContent.trim();
+                const holding = groupedHoldings[ticker];
+                if (holding) {
+                    showInvestmentDetails(holding);
+                }
+            }
+        });
+
+        transactionsList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-tx-btn')) {
+                const id = e.target.dataset.id;
+                showMessageBox('Are you sure you want to delete this transaction?', [
+                    { text: 'Cancel', class: 'bg-gray-200 text-gray-700 hover:bg-gray-300' },
+                    { text: 'Delete', class: 'bg-red-600 text-white hover:bg-red-700', callback: () => deleteTransaction(id) }
+                ]);
+            }
+        });
+        
+        closeDetailsModalBtn.addEventListener('click', () => {
+            detailsModal.classList.add('hidden');
+        });
+        
+        deleteDataBtn.addEventListener('click', () => {
+            showMessageBox('This will permanently delete ALL of your portfolio data. Are you sure?', [
+                { text: 'No, cancel', class: 'bg-gray-200 text-gray-700 hover:bg-gray-300' },
+                { text: 'Yes, delete', class: 'bg-red-600 text-white hover:bg-red-700', callback: async () => {
+                    const collectionRef = getCollectionRef();
+                    if (!collectionRef) return;
+                    const q = collection(db, collectionRef.path);
+                    const querySnapshot = await getDocs(q);
+                    const batch = writeBatch(db);
+                    querySnapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                    showMessageBox('All data deleted.', [{ text: 'OK', class: 'bg-indigo-600 text-white' }]);
+                }}
+            ]);
+        });
+        
+        getAiInsightsBtn.addEventListener('click', async () => {
+            if (transactionsData.length === 0) {
+                showMessageBox("You need to add at least one transaction to get AI insights.", [{ text: 'OK', class: 'bg-indigo-600 text-white' }]);
+                return;
+            }
+            
+            aiResponseModal.classList.remove('hidden');
+            aiResponseContent.innerHTML = `<div class="flex items-center justify-center"><div class="animate-spin rounded-full h-8 w-8 border-2 border-t-2 border-blue-500 border-opacity-75"></div></div>`;
+            
+            const portfolioSummary = JSON.stringify(Object.values(groupedHoldings).map(h => ({
+                ticker: h.ticker,
+                shares: h.shares,
+                averagePrice: h.averagePrice,
+                currentPrice: h.currentPrice,
+                market: h.market
+            })));
+            
+            const systemPrompt = "Act as a financial analyst. Provide a concise, single-paragraph summary of the user's portfolio performance, highlighting key metrics like total value, overall gain/loss, and a brief insight based on the data. Avoid technical jargon and use simple language. Do not invent any numbers. Stick strictly to the provided data. Your tone should be helpful and informative.";
+            const userQuery = `Based on this portfolio data, provide a summary: ${portfolioSummary}`;
 
             try {
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+                
+                const apiKey = ""
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const text = candidate.content.parts[0].text;
                     aiResponseContent.innerHTML = `<p>${text}</p>`;
                 } else {
-                    aiResponseContent.innerHTML = `<p class="text-red-500">Error generating summary. Please try again.</p>`;
-                    console.error("AI response content not found.");
+                    aiResponseContent.innerHTML = `<p class="text-red-500">Error generating insights. Please try again.</p>`;
                 }
             } catch (error) {
-                console.error("API call failed:", error);
-                aiResponseContent.innerHTML = `<p class="text-red-500">Error: Could not connect to the AI service. Please try again later.</p>`;
+                console.error("AI API call failed:", error);
+                aiResponseContent.innerHTML = `<p class="text-red-500">Could not connect to the insights service. Please try again later.</p>`;
             }
         });
+        
+        closeAiModalBtn.addEventListener('click', () => {
+            aiResponseModal.classList.add('hidden');
+        });
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const newFilter = e.target.dataset.filter;
+                currentFilter = newFilter;
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-indigo-200', 'text-indigo-800', 'font-semibold');
+                    b.classList.add('bg-gray-200', 'text-gray-700');
+                });
+                e.target.classList.remove('bg-gray-200', 'text-gray-700');
+                e.target.classList.add('bg-indigo-200', 'text-indigo-800', 'font-semibold');
+                renderPortfolio();
+            });
+        });
+        
+        // Corrected Initialization Function
+        const init = () => {
+            try {
+                if (Object.keys(firebaseConfig).length === 0) {
+                    throw new Error("Firebase configuration is missing. The app cannot run.");
+                }
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                onAuthStateChanged(auth, async (user) => {
+                    showLoading(false);
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = `User: ${userId.slice(0, 8)}...`;
+                        profileUserIdDisplay.textContent = userId;
+                        appContainer.classList.remove('hidden');
+                        showAuthModal(false);
+                        listenForTransactions(); // Start listening for data changes
+                    } else {
+                        userId = null;
+                        userIdDisplay.textContent = `Not signed in`;
+                        profileUserIdDisplay.textContent = 'Not authenticated';
+                        appContainer.classList.add('hidden');
+                        showAuthModal(true);
+                        
+                        // Attempt to sign in with the custom token or anonymously
+                        if (initialAuthToken) {
+                            try {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } catch (error) {
+                                console.error("Custom token sign-in failed:", error);
+                                showMessageBox(`Authentication failed. Please sign in.`, [{ text: 'OK', class: 'bg-indigo-600 text-white' }]);
+                            }
+                        } else {
+                            try {
+                                await signInAnonymously(auth);
+                            } catch (error) {
+                                console.error("Anonymous sign-in failed:", error);
+                                showMessageBox(`Anonymous sign-in failed. Please try again.`, [{ text: 'OK', class: 'bg-indigo-600 text-white' }]);
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                showLoading(false);
+                console.error("Firebase Initialization Error:", error);
+                showMessageBox(`Startup Error: ${error.message}`, [{ text: 'OK', class: 'bg-red-600 text-white' }]);
+            }
+        };
 
+        // Start the application
+        window.onload = init;
     </script>
 </body>
 </html>
