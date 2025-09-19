@@ -372,8 +372,14 @@
         // --- Firebase & App State Initialization ---
         let app, db, auth, userId, unsubscribe;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        
+        const firebaseConfig = {
+		  apiKey: "AIzaSyBUkADc0TTBrM0STMhTLzA6htyYgiOdsro",
+		  authDomain: "investmenttracker-af126.firebaseapp.com",
+		  projectId: "yinvestmenttracker-af126",
+		  storageBucket: "investmenttracker-af126.firebasestorage.app",
+		  messagingSenderId: "782078886994",
+		  appId: "1:782078886994:web:8d02aed4ddd2f62b198b8b",
+		  measurementId: "G-NVNMZPPC3H"};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
         // Let's set the log level to debug for now
