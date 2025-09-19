@@ -1,1253 +1,1278 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Investment Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .container {
-            max-width: 900px;
-            margin: auto;
-        }
-        .active-nav {
-            color: #4f46e5;
-        }
-        .active-nav-bg {
-            background-color: #eef2ff;
-        }
-        .delete-btn {
-            background-color: #fca5a5;
-            color: #991b1b;
-        }
-        .delete-btn:hover {
-            background-color: #f87171;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+        .active-nav {
+            color: #4f46e5;
+        }
+        .active-nav-bg {
+            background-color: #eef2ff;
+        }
+        .delete-btn {
+            background-color: #fca5a5;
+            color: #991b1b;
+        }
+        .delete-btn:hover {
+            background-color: #f87171;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
-    <!-- Loading Spinner -->
-    <div id="loading-spinner" class="fixed inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center z-50">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-4 border-blue-500 border-opacity-75"></div>
-    </div>
-    
-    <!-- Login/Signup Modal -->
-    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-40 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 id="auth-modal-title" class="text-2xl font-bold text-center mb-6 text-gray-800">Sign in</h3>
-            <form id="auth-form" class="space-y-4">
-                <div>
-                    <label for="auth-email" class="block text-sm font-medium text-gray-700">Email address</label>
-                    <input type="email" id="auth-email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label for="auth-password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="auth-password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <button type="submit" id="auth-submit-btn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200">Sign in</button>
-            </form>
-            <p id="auth-toggle-link" class="text-center text-sm mt-4 text-gray-600 cursor-pointer">
-                Don't have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign up</span>
-            </p>
-        </div>
-    </div>
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="fixed inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-4 border-blue-500 border-opacity-75"></div>
+    </div>
+    
+    <!-- Login/Signup Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-40 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 id="auth-modal-title" class="text-2xl font-bold text-center mb-6 text-gray-800">Sign in</h3>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="auth-email" class="block text-sm font-medium text-gray-700">Email address</label>
+                    <input type="email" id="auth-email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="auth-password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="auth-password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <button type="submit" id="auth-submit-btn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200">Sign in</button>
+            </form>
+            <p id="auth-toggle-link" class="text-center text-sm mt-4 text-gray-600 cursor-pointer">
+                Don't have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign up</span>
+            </p>
+        </div>
+    </div>
 
-    <!-- Main App Container -->
-    <div id="app-container" class="container bg-white rounded-xl shadow-lg m-4 p-6 flex-grow relative hidden">
+    <!-- Main App Container -->
+    <div id="app-container" class="container bg-white rounded-xl shadow-lg m-4 p-6 flex-grow relative hidden">
 
-        <!-- Header and User Info -->
-        <header class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">My Portfolio</h1>
-            <div class="flex items-center space-x-2">
-                <div class="flex items-center space-x-2 bg-gray-50 text-gray-600 px-3 py-1 rounded-full text-sm">
-                    <span id="user-id-display" class="truncate">Authenticating...</span>
-                </div>
-                <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 transition-colors duration-200 font-medium">Log out</button>
-            </div>
-        </header>
+        <!-- Header and User Info -->
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">My Portfolio</h1>
+            <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-2 bg-gray-50 text-gray-600 px-3 py-1 rounded-full text-sm">
+                    <span id="user-id-display" class="truncate">Authenticating...</span>
+                </div>
+                <button id="logout-btn" class="text-sm text-red-500 hover:text-red-700 transition-colors duration-200 font-medium">Log out</button>
+            </div>
+        </header>
 
-        <!-- Main Content Area -->
-        <div id="content-area" class="pb-24">
-            <!-- Dashboard View -->
-            <div id="dashboard-page" class="page">
-                <section class="grid md:grid-cols-2 gap-6 mb-6">
-                    <div class="bg-indigo-50 p-6 rounded-xl shadow-inner border border-indigo-200">
-                        <h2 class="text-lg text-indigo-800 font-semibold mb-2">Total Portfolio Value</h2>
-                        <p id="total-value" class="text-4xl font-bold text-indigo-600">$0.00</p>
-                    </div>
-                    <div class="bg-green-50 p-6 rounded-xl shadow-inner border border-green-200">
-                        <h2 class="text-lg text-green-800 font-semibold mb-2">Overall Gain/Loss</h2>
-                        <p id="overall-gain-loss" class="text-4xl font-bold text-green-600">$0.00</p>
-                        <span id="overall-gain-loss-pct" class="text-green-500 text-sm font-medium"> (0.00%)</span>
-                    </div>
-                </section>
-                
-                <section class="grid md:grid-cols-2 gap-6 mb-6">
-                    <div class="bg-blue-50 p-6 rounded-xl shadow-inner border border-blue-200">
-                        <h2 class="text-lg text-blue-800 font-semibold mb-2">Time-Weighted Return (TWR)</h2>
-                        <p id="twr-value" class="text-4xl font-bold text-blue-600">0.00%</p>
-                        <p class="text-xs text-gray-500 mt-2">A measure of compound growth, unaffected by deposits/withdrawals.</p>
-                    </div>
-                    <div class="bg-blue-50 p-6 rounded-xl shadow-inner border border-blue-200">
-                        <h2 class="text-lg text-blue-800 font-semibold mb-2">Money-Weighted Return (MWR)</h2>
-                        <p id="mwr-value" class="text-4xl font-bold text-blue-600">0.00%</p>
-                        <p class="text-xs text-gray-500 mt-2">The return rate that accounts for timing of cash flows.</p>
-                    </div>
-                </section>
+        <!-- Main Content Area -->
+        <div id="content-area" class="pb-24">
+            <!-- Dashboard View -->
+            <div id="dashboard-page" class="page">
+                <section class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-indigo-50 p-6 rounded-xl shadow-inner border border-indigo-200">
+                        <h2 class="text-lg text-indigo-800 font-semibold mb-2">Total Portfolio Value</h2>
+                        <p id="total-value" class="text-4xl font-bold text-indigo-600">$0.00</p>
+                    </div>
+                    <div class="bg-green-50 p-6 rounded-xl shadow-inner border border-green-200">
+                        <h2 class="text-lg text-green-800 font-semibold mb-2">Overall Gain/Loss</h2>
+                        <p id="overall-gain-loss" class="text-4xl font-bold text-green-600">$0.00</p>
+                        <span id="overall-gain-loss-pct" class="text-green-500 text-sm font-medium"> (0.00%)</span>
+                    </div>
+                </section>
+                
+                <section class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-blue-50 p-6 rounded-xl shadow-inner border border-blue-200">
+                        <h2 class="text-lg text-blue-800 font-semibold mb-2">Time-Weighted Return (TWR)</h2>
+                        <p id="twr-value" class="text-4xl font-bold text-blue-600">0.00%</p>
+                        <p class="text-xs text-gray-500 mt-2">A measure of compound growth, unaffected by deposits/withdrawals.</p>
+                    </div>
+                    <div class="bg-blue-50 p-6 rounded-xl shadow-inner border border-blue-200">
+                        <h2 class="text-lg text-blue-800 font-semibold mb-2">Money-Weighted Return (MWR)</h2>
+                        <p id="mwr-value" class="text-4xl font-bold text-blue-600">0.00%</p>
+                        <p class="text-xs text-gray-500 mt-2">The return rate that accounts for timing of cash flows.</p>
+                    </div>
+                </section>
 
-                <section class="bg-white p-6 rounded-xl shadow border border-gray-100 mb-6">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Asset Allocation</h2>
-                    <div class="w-full h-64 flex items-center justify-center">
-                        <p id="chart-placeholder" class="text-gray-400">Add a transaction to see your asset allocation here.</p>
-                        <canvas id="allocation-chart" class="w-full h-full hidden"></canvas>
-                    </div>
-                </section>
+                <section class="bg-white p-6 rounded-xl shadow border border-gray-100 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Asset Allocation</h2>
+                    <div class="w-full h-64 flex items-center justify-center">
+                        <p id="chart-placeholder" class="text-gray-400">Add a transaction to see your asset allocation here.</p>
+                        <canvas id="allocation-chart" class="w-full h-full hidden"></canvas>
+                    </div>
+                </section>
 
-                <section class="flex justify-center">
-                    <button id="get-ai-insights-btn" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium shadow-md hover:bg-purple-700 transition-colors duration-200">
-                        Get AI Portfolio Summary ✨
-                    </button>
-                </section>
-            </div>
+                <section class="flex justify-center">
+                    <button id="get-ai-insights-btn" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium shadow-md hover:bg-purple-700 transition-colors duration-200">
+                        Get AI Portfolio Summary ✨
+                    </button>
+                </section>
+            </div>
 
-            <!-- Portfolio View -->
-            <div id="portfolio-page" class="page hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-semibold text-gray-800">My Investments</h2>
-                    <button id="add-investment-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow hover:bg-blue-700 transition-colors duration-200">
-                        + Add New
-                    </button>
-                </div>
-                <div class="flex items-center space-x-2 mb-4">
-                    <span class="text-sm font-medium text-gray-700">Filter By:</span>
-                    <button data-filter="all" class="filter-btn text-sm px-3 py-1 rounded-full bg-indigo-200 text-indigo-800 font-semibold">All</button>
-                    <button data-filter="US" class="filter-btn text-sm px-3 py-1 rounded-full bg-gray-200 text-gray-700">US</button>
-                    <button data-filter="Malaysia" class="filter-btn text-sm px-3 py-1 rounded-full bg-gray-200 text-gray-700">Malaysia</button>
-                    <button data-filter="Stock" class="filter-btn text-sm px-3 py-1 rounded-full bg-gray-200 text-gray-700">Stocks</button>
-                    <button data-filter="ETF" class="filter-btn text-sm px-3 py-1 rounded-full bg-gray-200 text-gray-700">ETFs</button>
-                </div>
-                <div id="investments-list" class="space-y-4">
-                    <!-- Investment items will be rendered here -->
-                </div>
-                <div id="empty-state" class="text-center text-gray-400 mt-8 hidden">
-                    <p class="mb-2">You don't have any investments yet.</p>
-                    <p>Click "Add New" to get started!</p>
-                </div>
-            </div>
+            <!-- Portfolio View -->
+            <div id="portfolio-page" class="page hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-semibold text-gray-800">My Investments</h2>
+                    <button id="add-investment-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow hover:bg-blue-700 transition-colors duration-200">
+                        + Add New
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2 mb-4">
+                    <span class="text-sm font-medium text-gray-700">Filter By:</span>
+                    <button data-filter="all" class="filter-btn text-sm px-3 py-1 rounded-full bg-indigo-200 text-indigo-800 font-semibold">All</button>
+                    <button data-filter="US" class="filter-btn text-sm px-3 py-1 rounded-full bg-gray-200 text-gray-700">US</button>
+                    <button data-filter="Malaysia" class="filter-btn text-sm px-3 py-1 rounded-full bg-gray-200 text-gray-700">Malaysia</button>
+                    <button data-filter="Stock" class="filter-btn text-sm px-3 py-1 rounded-full bg-gray-200 text-gray-700">Stocks</button>
+                    <button data-filter="ETF" class="filter-btn text-sm px-3 py-1 rounded-full bg-gray-200 text-gray-700">ETFs</button>
+                </div>
+                <div id="investments-list" class="space-y-4">
+                    <!-- Investment items will be rendered here -->
+                </div>
+                <div id="empty-state" class="text-center text-gray-400 mt-8 hidden">
+                    <p class="mb-2">You don't have any investments yet.</p>
+                    <p>Click "Add New" to get started!</p>
+                </div>
+            </div>
 
-            <!-- Transactions View -->
-            <div id="transactions-page" class="page hidden">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Transaction History</h2>
-                <div id="transactions-list" class="space-y-4">
-                    <!-- Transaction items will be rendered here -->
-                </div>
-                <div id="empty-transactions-state" class="text-center text-gray-400 mt-8 hidden">
-                    <p class="mb-2">No transactions recorded.</p>
-                </div>
-            </div>
+            <!-- Transactions View -->
+            <div id="transactions-page" class="page hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Transaction History</h2>
+                <div id="transactions-list" class="space-y-4">
+                    <!-- Transaction items will be rendered here -->
+                </div>
+                <div id="empty-transactions-state" class="text-center text-gray-400 mt-8 hidden">
+                    <p class="mb-2">No transactions recorded.</p>
+                </div>
+            </div>
 
-            <!-- Markets View -->
-            <div id="markets-page" class="page hidden">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Global Markets</h2>
-                <div class="bg-gray-50 p-6 rounded-xl shadow-inner text-center text-gray-400">
-                    <p>This section would display live market data, news, and indices.</p>
-                    <p>This is a placeholder as real-time market data requires a separate API integration.</p>
-                </div>
-            </div>
+            <!-- Markets View -->
+            <div id="markets-page" class="page hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Global Markets</h2>
+                <div class="bg-gray-50 p-6 rounded-xl shadow-inner text-center text-gray-400">
+                    <p>This section would display live market data, news, and indices.</p>
+                    <p>This is a placeholder as real-time market data requires a separate API integration.</p>
+                </div>
+            </div>
 
-            <!-- Profile/Settings View -->
-            <div id="profile-page" class="page hidden">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Profile & Settings</h2>
-                <div class="bg-gray-50 p-6 rounded-xl shadow-inner">
-                    <p class="font-medium text-gray-700 mb-2">Your User ID:</p>
-                    <p id="profile-user-id" class="text-sm font-mono break-all text-gray-500">Not available in demo mode</p>
-                </div>
-                <div class="mt-6 bg-red-50 p-6 rounded-xl shadow-inner border border-red-200">
-                    <h3 class="text-lg font-semibold text-red-800 mb-2">Danger Zone</h3>
-                    <p class="text-sm text-red-700 mb-4">
-                        This action will permanently delete all of your data from the app.
-                    </p>
-                    <button id="delete-data-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg font-medium shadow hover:bg-red-700 transition-colors duration-200">
-                        Delete My Data
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+            <!-- Profile/Settings View -->
+            <div id="profile-page" class="page hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Profile & Settings</h2>
+                <div class="bg-gray-50 p-6 rounded-xl shadow-inner">
+                    <p class="font-medium text-gray-700 mb-2">Your User ID:</p>
+                    <p id="profile-user-id" class="text-sm font-mono break-all text-gray-500">Not available in demo mode</p>
+                </div>
+                <div class="mt-6 bg-red-50 p-6 rounded-xl shadow-inner border border-red-200">
+                    <h3 class="text-lg font-semibold text-red-800 mb-2">Danger Zone</h3>
+                    <p class="text-sm text-red-700 mb-4">
+                        This action will permanently delete all of your data from the app.
+                    </p>
+                    <button id="delete-data-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg font-medium shadow hover:bg-red-700 transition-colors duration-200">
+                        Delete My Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Modal for Adding/Editing an Investment -->
-    <div id="investment-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-40 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="modal-title" class="text-xl font-bold text-gray-800">Add New Transaction</h3>
-                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">&times;</button>
-            </div>
-            <form id="investment-form" class="space-y-4">
-                <div>
-                    <label for="transaction-date" class="block text-sm font-medium text-gray-700">Date</label>
-                    <input type="date" id="transaction-date" name="transaction-date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Transaction Type</label>
-                    <div class="mt-1 flex space-x-2">
-                        <button type="button" id="type-buy-btn" class="flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-indigo-600 text-white">Buy</button>
-                        <button type="button" id="type-sell-btn" class="flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300">Sell</button>
-                    </div>
-                </div>
-                <div>
-                    <label for="market" class="block text-sm font-medium text-gray-700">Market</label>
-                    <select id="market" name="market" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="US">US</option>
-                        <option value="Malaysia">Malaysia</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="asset-type" class="block text-sm font-medium text-gray-700">Asset Type</label>
-                    <select id="asset-type" name="asset-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="Stock">Stock</option>
-                        <option value="ETF">ETF</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="ticker" class="block text-sm font-medium text-gray-700">Ticker Symbol</label>
-                    <input type="text" id="ticker" name="ticker" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label for="shares" class="block text-sm font-medium text-gray-700">Number of Shares</label>
-                    <input type="number" id="shares" name="shares" required min="0.01" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <div id="buy-price-group" class="price-group">
-                    <label for="buy-price" class="block text-sm font-medium text-gray-700">Buy Price (USD/MYR)</label>
-                    <input type="number" id="buy-price" name="buy-price" required min="0.01" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <div id="sell-price-group" class="price-group hidden">
-                    <label for="sell-price" class="block text-sm font-medium text-gray-700">Sell Price (USD/MYR)</label>
-                    <input type="number" id="sell-price" name="sell-price" required min="0.01" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <input type="hidden" id="transaction-id">
-                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200 mt-4">Save Transaction</button>
-            </form>
-        </div>
-    </div>
+    <!-- Modal for Adding/Editing an Investment -->
+    <div id="investment-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-40 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-xl font-bold text-gray-800">Add New Transaction</h3>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">&times;</button>
+            </div>
+            <form id="investment-form" class="space-y-4">
+                <div>
+                    <label for="transaction-date" class="block text-sm font-medium text-gray-700">Date</label>
+                    <input type="date" id="transaction-date" name="transaction-date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Transaction Type</label>
+                    <div class="mt-1 flex space-x-2">
+                        <button type="button" id="type-buy-btn" class="flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-indigo-600 text-white">Buy</button>
+                        <button type="button" id="type-sell-btn" class="flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300">Sell</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="market" class="block text-sm font-medium text-gray-700">Market</label>
+                    <select id="market" name="market" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="US">US</option>
+                        <option value="Malaysia">Malaysia</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="asset-type" class="block text-sm font-medium text-gray-700">Asset Type</label>
+                    <select id="asset-type" name="asset-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="Stock">Stock</option>
+                        <option value="ETF">ETF</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="ticker" class="block text-sm font-medium text-gray-700">Ticker Symbol</label>
+                    <input type="text" id="ticker" name="ticker" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="shares" class="block text-sm font-medium text-gray-700">Number of Shares</label>
+                    <input type="number" id="shares" name="shares" required min="0.01" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div id="buy-price-group" class="price-group">
+                    <label for="buy-price" class="block text-sm font-medium text-gray-700">Buy Price (USD/MYR)</label>
+                    <input type="number" id="buy-price" name="buy-price" required min="0.01" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div id="sell-price-group" class="price-group hidden">
+                    <label for="sell-price" class="block text-sm font-medium text-gray-700">Sell Price (USD/MYR)</label>
+                    <input type="number" id="sell-price" name="sell-price" required min="0.01" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <input type="hidden" id="transaction-id">
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200 mt-4">Save Transaction</button>
+            </form>
+        </div>
+    </div>
 
-    <!-- Modal for Detailed Investment View -->
-    <div id="details-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-40 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="details-modal-title" class="text-xl font-bold text-gray-800"></h3>
-                <button id="close-details-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">&times;</button>
-            </div>
-            <div class="space-y-4">
-                <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
-                    <h4 class="font-semibold text-gray-700 mb-2">Price History (Simulated)</h4>
-                    <div class="w-full h-48">
-                        <canvas id="price-chart"></canvas>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
-                        <p class="text-sm text-gray-500">Quantity Owned</p>
-                        <p id="details-shares" class="text-lg font-bold text-gray-800"></p>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
-                        <p class="text-sm text-gray-500">Average Buy Price</p>
-                        <p id="details-buy-price" class="text-lg font-bold text-gray-800"></p>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
-                        <p class="text-sm text-gray-500">Total Cost</p>
-                        <p id="details-total-cost" class="text-lg font-bold text-gray-800"></p>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
-                        <p class="text-sm text-gray-500">Current Market Value</p>
-                        <p id="details-current-value" class="text-lg font-bold text-gray-800"></p>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm col-span-2">
-                        <p class="text-sm text-gray-500">Unrealized Gain/Loss</p>
-                        <p id="details-gain-loss" class="text-lg font-bold text-gray-800"></p>
-                    </div>
-                </div>
-                <!-- New section for Transaction Log -->
-                <div class="mt-6">
-                    <h4 class="font-semibold text-xl text-gray-700 mb-2">Transaction History</h4>
-                    <div id="details-transactions-list" class="space-y-4">
-                        <!-- Transactions for this specific ticker will be rendered here -->
-                    </div>
-                    <div id="empty-details-transactions-state" class="text-center text-gray-400 mt-4 hidden">
-                        <p>No transactions for this holding.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Modal for Detailed Investment View -->
+    <div id="details-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-40 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="details-modal-title" class="text-xl font-bold text-gray-800"></h3>
+                <button id="close-details-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
+                    <h4 class="font-semibold text-gray-700 mb-2">Price History (Simulated)</h4>
+                    <div class="w-full h-48">
+                        <canvas id="price-chart"></canvas>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
+                        <p class="text-sm text-gray-500">Quantity Owned</p>
+                        <p id="details-shares" class="text-lg font-bold text-gray-800"></p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
+                        <p class="text-sm text-gray-500">Average Buy Price</p>
+                        <p id="details-buy-price" class="text-lg font-bold text-gray-800"></p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
+                        <p class="text-sm text-gray-500">Total Cost</p>
+                        <p id="details-total-cost" class="text-lg font-bold text-gray-800"></p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm">
+                        <p class="text-sm text-gray-500">Current Market Value</p>
+                        <p id="details-current-value" class="text-lg font-bold text-gray-800"></p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-xl shadow-sm col-span-2">
+                        <p class="text-sm text-gray-500">Unrealized Gain/Loss</p>
+                        <p id="details-gain-loss" class="text-lg font-bold text-gray-800"></p>
+                    </div>
+                </div>
+                <!-- New section for Transaction Log -->
+                <div class="mt-6">
+                    <h4 class="font-semibold text-xl text-gray-700 mb-2">Transaction History</h4>
+                    <div id="details-transactions-list" class="space-y-4">
+                        <!-- Transactions for this specific ticker will be rendered here -->
+                    </div>
+                    <div id="empty-details-transactions-state" class="text-center text-gray-400 mt-4 hidden">
+                        <p>No transactions for this holding.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
-    <!-- Message Box Modal -->
-    <div id="message-box" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
-            <p id="message-box-text" class="text-gray-800 text-lg mb-4"></p>
-            <div id="message-box-actions" class="flex justify-center space-x-4">
-                <button id="message-box-ok-btn" class="bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200">OK</button>
-            </div>
-        </div>
-    </div>
+    <!-- Message Box Modal -->
+    <div id="message-box" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
+            <p id="message-box-text" class="text-gray-800 text-lg mb-4"></p>
+            <div id="message-box-actions" class="flex justify-center space-x-4">
+                <button id="message-box-ok-btn" class="bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200">OK</button>
+            </div>
+        </div>
+    </div>
 
-    <!-- AI Response Modal -->
-    <div id="ai-response-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="ai-modal-title" class="text-xl font-bold text-gray-800">AI Insights</h3>
-                <button id="close-ai-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">&times;</button>
-            </div>
-            <div id="ai-response-content" class="text-gray-700 prose max-w-none">
-                <div class="flex items-center justify-center">
-                    <div class="animate-spin rounded-full h-8 w-8 border-2 border-t-2 border-blue-500 border-opacity-75"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- AI Response Modal -->
+    <div id="ai-response-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="ai-modal-title" class="text-xl font-bold text-gray-800">AI Insights</h3>
+                <button id="close-ai-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">&times;</button>
+            </div>
+            <div id="ai-response-content" class="text-gray-700 prose max-w-none">
+                <div class="flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-2 border-t-2 border-blue-500 border-opacity-75"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white shadow-2xl border-t border-gray-200 z-30">
-        <ul class="flex justify-around items-center h-16 text-gray-500 text-sm">
-            <li>
-                <button id="nav-dashboard" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200 active-nav-bg active-nav">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    <span class="mt-1">Dashboard</span>
-                </button>
-            </li>
-            <li>
-                <button id="nav-portfolio" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-2v2m-4-2v2m4-2h.01M12 18a6 6 0 100-12 6 6 0 000 12z" />
-                    </svg>
-                    <span class="mt-1">Portfolio</span>
-                </button>
-            </li>
-            <li>
-                <button id="nav-transactions" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="mt-1">Transactions</span>
-                </button>
-            </li>
-            <li>
-                <button id="nav-markets" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L11 20" />
-                    </svg>
-                    <span class="mt-1">Markets</span>
-                </button>
-            </li>
-            <li>
-                <button id="nav-profile" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span class="mt-1">Profile</span>
-                </button>
-            </li>
-        </ul>
-    </nav>
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white shadow-2xl border-t border-gray-200 z-30">
+        <ul class="flex justify-around items-center h-16 text-gray-500 text-sm">
+            <li>
+                <button id="nav-dashboard" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200 active-nav-bg active-nav">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span class="mt-1">Dashboard</span>
+                </button>
+            </li>
+            <li>
+                <button id="nav-portfolio" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-2v2m-4-2v2m4-2h.01M12 18a6 6 0 100-12 6 6 0 000 12z" />
+                    </svg>
+                    <span class="mt-1">Portfolio</span>
+                </button>
+            </li>
+            <li>
+                <button id="nav-transactions" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="mt-1">Transactions</span>
+                </button>
+            </li>
+            <li>
+                <button id="nav-markets" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L11 20" />
+                    </svg>
+                    <span class="mt-1">Markets</span>
+                </button>
+            </li>
+            <li>
+                <button id="nav-profile" class="nav-item flex flex-col items-center p-2 rounded-lg transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span class="mt-1">Profile</span>
+                </button>
+            </li>
+        </ul>
+    </nav>
 
-    <!-- External Libraries (Firebase and Chart.js) -->
-    <script type="module">
-        // Firebase Imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, setDoc, deleteDoc, onSnapshot, collection, setLogLevel, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { Chart, DoughnutController, ArcElement, LineController, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend } from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/+esm';
-
-        // Register Chart.js components
-        Chart.register(DoughnutController, ArcElement, LineController, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
-        
-        // --- Firebase & App State Initialization ---
-        let app, db, auth, userId, unsubscribe;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = {
+    <!-- External Libraries (Firebase and Chart.js) -->
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, setDoc, deleteDoc, onSnapshot, collection, setLogLevel, getDocs, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { Chart, DoughnutController, ArcElement, LineController, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend } from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/+esm';
+        
+        // Register Chart.js components
+        Chart.register(DoughnutController, ArcElement, LineController, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+        
+        // --- Firebase & App State Initialization ---
+        let app, db, auth, userId, unsubscribe;
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = {
 		  apiKey: "AIzaSyBUkADc0TTBrM0STMhTLzA6htyYgiOdsro",
 		  authDomain: "investmenttracker-af126.firebaseapp.com",
 		  projectId: "yinvestmenttracker-af126",
 		  storageBucket: "investmenttracker-af126.firebasestorage.app",
 		  messagingSenderId: "782078886994",
 		  appId: "1:782078886994:web:8d02aed4ddd2f62b198b8b",
-		  measurementId: "G-NVNMZPPC3H"};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
-        // Let's set the log level to debug for now
-        setLogLevel('debug');
-        
-        let transactionsData = [];
-        let groupedHoldings = {};
-        let allocationChart = null;
-        let priceChart = null;
-        let currentFilter = 'all';
-        let currentTxType = 'Buy';
-        let currentInvestment = null; // Store the currently viewed investment for the details modal
+		  measurementId: "G-NVNMZPPC3H"
+		};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // --- DOM Elements ---
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const appContainer = document.getElementById('app-container');
-        const authModal = document.getElementById('auth-modal');
-        const authModalTitle = document.getElementById('auth-modal-title');
-        const authForm = document.getElementById('auth-form');
-        const authEmailInput = document.getElementById('auth-email');
-        const authPasswordInput = document.getElementById('auth-password');
-        const authSubmitBtn = document.getElementById('auth-submit-btn');
-        const authToggleLink = document.getElementById('auth-toggle-link');
-        const logoutBtn = document.getElementById('logout-btn');
-        const userIdDisplay = document.getElementById('user-id-display');
-        const profileUserIdDisplay = document.getElementById('profile-user-id');
-        const navItems = document.querySelectorAll('.nav-item');
-        const pages = document.querySelectorAll('.page');
-        const addInvestmentBtn = document.getElementById('add-investment-btn');
-        const investmentModal = document.getElementById('investment-modal');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const investmentForm = document.getElementById('investment-form');
-        const investmentsList = document.getElementById('investments-list');
-        const emptyState = document.getElementById('empty-state');
-        const totalValueEl = document.getElementById('total-value');
-        const overallGainLossEl = document.getElementById('overall-gain-loss');
-        const overallGainLossPctEl = document.getElementById('overall-gain-loss-pct');
-        const twrValueEl = document.getElementById('twr-value');
-        const mwrValueEl = document.getElementById('mwr-value');
-        const transactionsList = document.getElementById('transactions-list');
-        const emptyTransactionsState = document.getElementById('empty-transactions-state');
-        const deleteDataBtn = document.getElementById('delete-data-btn');
-        const messageBox = document.getElementById('message-box');
-        const messageBoxText = document.getElementById('message-box-text');
-        const messageBoxActions = document.getElementById('message-box-actions');
-        const allocationChartCtx = document.getElementById('allocation-chart').getContext('2d');
-        const chartPlaceholder = document.getElementById('chart-placeholder');
-        const getAiInsightsBtn = document.getElementById('get-ai-insights-btn');
-        const aiResponseModal = document.getElementById('ai-response-modal');
-        const closeAiModalBtn = document.getElementById('close-ai-modal-btn');
-        const aiModalTitle = document.getElementById('ai-modal-title');
-        const aiResponseContent = document.getElementById('ai-response-content');
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        
-        // Detail Modal Elements
-        const detailsModal = document.getElementById('details-modal');
-        const closeDetailsModalBtn = document.getElementById('close-details-modal-btn');
-        const detailsModalTitle = document.getElementById('details-modal-title');
-        const detailsSharesEl = document.getElementById('details-shares');
-        const detailsBuyPriceEl = document.getElementById('details-buy-price');
-        const detailsTotalCostEl = document.getElementById('details-total-cost');
-        const detailsCurrentValueEl = document.getElementById('details-current-value');
-        const detailsGainLossEl = document.getElementById('details-gain-loss');
-        const priceChartCtx = document.getElementById('price-chart').getContext('2d');
-        const detailsTransactionsList = document.getElementById('details-transactions-list');
-        const emptyDetailsTransactionsState = document.getElementById('empty-details-transactions-state');
-        
-        // Transaction Form Elements
-        const modalTitle = document.getElementById('modal-title');
-        const transactionIdInput = document.getElementById('transaction-id');
-        const transactionDateInput = document.getElementById('transaction-date');
-        const typeBuyBtn = document.getElementById('type-buy-btn');
-        const typeSellBtn = document.getElementById('type-sell-btn');
-        const buyPriceGroup = document.getElementById('buy-price-group');
-        const sellPriceGroup = document.getElementById('sell-price-group');
-        const tickerInput = document.getElementById('ticker');
-        const sharesInput = document.getElementById('shares');
-        const buyPriceInput = document.getElementById('buy-price');
-        const sellPriceInput = document.getElementById('sell-price');
-        const marketSelect = document.getElementById('market');
-        const assetTypeSelect = document.getElementById('asset-type');
-        
-        // --- Firebase Functions ---
-        const getCollectionRef = () => {
-            if (!userId) return null;
-            // IMPORTANT: Use the /artifacts/{appId}/users/{userId}/... structure
-            const collectionPath = `/artifacts/${appId}/users/${userId}/transactions`;
-            return collection(db, collectionPath);
-        };
-        
-        const listenForTransactions = () => {
-            if (unsubscribe) {
-                unsubscribe();
-            }
-            const collectionRef = getCollectionRef();
-            if (!collectionRef) {
-                console.error("Collection reference is null, cannot listen for updates.");
-                return;
-            }
-            unsubscribe = onSnapshot(collectionRef, (querySnapshot) => {
-                const transactions = [];
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    transactions.push({
-                        id: doc.id,
-                        ...data,
-                        timestamp: data.timestamp.toDate() // Convert Firestore Timestamp to JS Date
-                    });
-                });
-                transactionsData = transactions;
-                groupedHoldings = groupHoldingsByTicker(transactionsData);
-                renderAllViews();
-            }, (error) => {
-                console.error("Error fetching transactions:", error);
-            });
-        };
-        
-        const addTransaction = async (transaction) => {
-            const collectionRef = getCollectionRef();
-            if (!collectionRef) {
-                console.error("Not authenticated, cannot add transaction.");
-                return;
-            }
-            await addDoc(collectionRef, transaction);
-        };
+        // API key for the Gemini API call
+        const apiKey = "";
+        const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=" + apiKey;
 
-        const updateTransaction = async (id, updatedTransaction) => {
-            const collectionRef = getCollectionRef();
-            const docRef = doc(collectionRef, id);
-            await setDoc(docRef, updatedTransaction, { merge: true });
-        };
+        // Set log level to debug for now
+        setLogLevel('debug');
+        
+        let transactionsData = [];
+        let groupedHoldings = {};
+        let allocationChart = null;
+        let priceChart = null;
+        let currentFilter = 'all';
+        let currentTxType = 'Buy';
+        let currentInvestment = null; // Store the currently viewed investment for the details modal
 
-        const deleteTransaction = async (id) => {
-            const collectionRef = getCollectionRef();
-            const docRef = doc(collectionRef, id);
-            await deleteDoc(docRef);
-        };
+        // --- DOM Elements ---
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const appContainer = document.getElementById('app-container');
+        const authModal = document.getElementById('auth-modal');
+        const authModalTitle = document.getElementById('auth-modal-title');
+        const authForm = document.getElementById('auth-form');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const authToggleLink = document.getElementById('auth-toggle-link');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const profileUserIdDisplay = document.getElementById('profile-user-id');
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+        const addInvestmentBtn = document.getElementById('add-investment-btn');
+        const investmentModal = document.getElementById('investment-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const investmentForm = document.getElementById('investment-form');
+        const investmentsList = document.getElementById('investments-list');
+        const emptyState = document.getElementById('empty-state');
+        const totalValueEl = document.getElementById('total-value');
+        const overallGainLossEl = document.getElementById('overall-gain-loss');
+        const overallGainLossPctEl = document.getElementById('overall-gain-loss-pct');
+        const twrValueEl = document.getElementById('twr-value');
+        const mwrValueEl = document.getElementById('mwr-value');
+        const transactionsList = document.getElementById('transactions-list');
+        const emptyTransactionsState = document.getElementById('empty-transactions-state');
+        const deleteDataBtn = document.getElementById('delete-data-btn');
+        const messageBox = document.getElementById('message-box');
+        const messageBoxText = document.getElementById('message-box-text');
+        const messageBoxActions = document.getElementById('message-box-actions');
+        const allocationChartCtx = document.getElementById('allocation-chart').getContext('2d');
+        const chartPlaceholder = document.getElementById('chart-placeholder');
+        const getAiInsightsBtn = document.getElementById('get-ai-insights-btn');
+        const aiResponseModal = document.getElementById('ai-response-modal');
+        const closeAiModalBtn = document.getElementById('close-ai-modal-btn');
+        const aiModalTitle = document.getElementById('ai-modal-title');
+        const aiResponseContent = document.getElementById('ai-response-content');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        
+        // Detail Modal Elements
+        const detailsModal = document.getElementById('details-modal');
+        const closeDetailsModalBtn = document.getElementById('close-details-modal-btn');
+        const detailsModalTitle = document.getElementById('details-modal-title');
+        const detailsSharesEl = document.getElementById('details-shares');
+        const detailsBuyPriceEl = document.getElementById('details-buy-price');
+        const detailsTotalCostEl = document.getElementById('details-total-cost');
+        const detailsCurrentValueEl = document.getElementById('details-current-value');
+        const detailsGainLossEl = document.getElementById('details-gain-loss');
+        const priceChartCtx = document.getElementById('price-chart').getContext('2d');
+        const detailsTransactionsList = document.getElementById('details-transactions-list');
+        const emptyDetailsTransactionsState = document.getElementById('empty-details-transactions-state');
+        
+        // Transaction Form Elements
+        const modalTitle = document.getElementById('modal-title');
+        const transactionIdInput = document.getElementById('transaction-id');
+        const transactionDateInput = document.getElementById('transaction-date');
+        const typeBuyBtn = document.getElementById('type-buy-btn');
+        const typeSellBtn = document.getElementById('type-sell-btn');
+        const buyPriceGroup = document.getElementById('buy-price-group');
+        const sellPriceGroup = document.getElementById('sell-price-group');
+        const tickerInput = document.getElementById('ticker');
+        const sharesInput = document.getElementById('shares');
+        const buyPriceInput = document.getElementById('buy-price');
+        const sellPriceInput = document.getElementById('sell-price');
+        const marketSelect = document.getElementById('market');
+        const assetTypeSelect = document.getElementById('asset-type');
+        
+        // --- Firebase Functions ---
+        const getCollectionRef = () => {
+            if (!userId) return null;
+            // IMPORTANT: Use the /artifacts/{appId}/users/{userId}/... structure for private data
+            const collectionPath = `/artifacts/${appId}/users/${userId}/transactions`;
+            return collection(db, collectionPath);
+        };
+        
+        const listenForTransactions = () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+            const collectionRef = getCollectionRef();
+            if (!collectionRef) {
+                console.error("Collection reference is null, cannot listen for updates.");
+                return;
+            }
+            unsubscribe = onSnapshot(collectionRef, (querySnapshot) => {
+                const transactions = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    transactions.push({
+                        id: doc.id,
+                        ...data,
+                        timestamp: data.timestamp.toDate() // Convert Firestore Timestamp to JS Date
+                    });
+                });
+                transactionsData = transactions;
+                groupedHoldings = groupHoldingsByTicker(transactionsData);
+                renderAllViews();
+            }, (error) => {
+                console.error("Error fetching transactions:", error);
+            });
+        };
+        
+        const addTransaction = async (transaction) => {
+            const collectionRef = getCollectionRef();
+            if (!collectionRef) {
+                console.error("Not authenticated, cannot add transaction.");
+                return;
+            }
+            await addDoc(collectionRef, transaction);
+        };
 
-        const deleteAllData = async () => {
-            try {
-                const collectionRef = getCollectionRef();
-                if (!collectionRef) {
-                    showMessageBox('User not authenticated.');
-                    return;
-                }
-                showLoading(true);
-                const querySnapshot = await getDocs(collectionRef);
-                const batch = writeBatch(db);
-                querySnapshot.forEach((doc) => {
-                    batch.delete(doc.ref);
-                });
-                await batch.commit();
-                showMessageBox('All your data has been deleted.', 'success');
-                showLoading(false);
-            } catch (error) {
-                console.error("Error deleting data: ", error);
-                showMessageBox('Failed to delete data. Please try again.', 'error');
-                showLoading(false);
-            }
-        };
+        const updateTransaction = async (id, updatedTransaction) => {
+            const collectionRef = getCollectionRef();
+            const docRef = doc(collectionRef, id);
+            await setDoc(docRef, updatedTransaction, { merge: true });
+        };
 
-        // --- Helper Functions ---
-        const showLoading = (isLoading) => {
-            loadingSpinner.classList.toggle('hidden', !isLoading);
-        };
-        
-        const showModal = (modalElement) => {
-            modalElement.classList.remove('hidden');
-        };
-        
-        const hideModal = (modalElement) => {
-            modalElement.classList.add('hidden');
-        };
-        
-        const showMessageBox = (message, type = 'info', onConfirm = null) => {
-            messageBoxText.textContent = message;
-            messageBoxActions.innerHTML = '';
-            const okBtn = document.createElement('button');
-            okBtn.textContent = 'OK';
-            okBtn.className = "bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200";
-            okBtn.onclick = () => hideModal(messageBox);
-            messageBoxActions.appendChild(okBtn);
-            
-            if (onConfirm) {
-                const confirmBtn = document.createElement('button');
-                confirmBtn.textContent = 'Delete';
-                confirmBtn.className = "bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors duration-200";
-                confirmBtn.onclick = () => {
-                    hideModal(messageBox);
-                    onConfirm();
-                };
-                messageBoxActions.innerHTML = '';
-                messageBoxActions.appendChild(confirmBtn);
-                const cancelBtn = document.createElement('button');
-                cancelBtn.textContent = 'Cancel';
-                cancelBtn.className = "bg-gray-200 text-gray-800 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors duration-200";
-                cancelBtn.onclick = () => hideModal(messageBox);
-                messageBoxActions.appendChild(cancelBtn);
-            }
-            showModal(messageBox);
-        };
+        const deleteTransaction = async (id) => {
+            const collectionRef = getCollectionRef();
+            const docRef = doc(collectionRef, id);
+            await deleteDoc(docRef);
+        };
 
-        const formatCurrency = (value) => {
-            const formatter = new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD', // Placeholder, could be dynamic
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            });
-            return formatter.format(value);
-        };
-        
-        const formatPercentage = (value) => {
-            const formatter = new Intl.NumberFormat('en-US', {
-                style: 'percent',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            });
-            return formatter.format(value / 100);
-        };
+        const deleteUserTransactions = async () => {
+            const collectionRef = getCollectionRef();
+            if (!collectionRef) {
+                console.error("Not authenticated, cannot delete data.");
+                return;
+            }
+            showLoading();
+            const batch = writeBatch(db);
+            const querySnapshot = await getDocs(collectionRef);
+            querySnapshot.forEach(d => {
+                batch.delete(d.ref);
+            });
+            await batch.commit();
+            hideLoading();
+            showMessageBox("Your data has been successfully deleted.");
+        };
 
-        const showPage = (pageId) => {
-            pages.forEach(page => page.classList.add('hidden'));
-            navItems.forEach(nav => {
-                nav.classList.remove('active-nav-bg', 'active-nav');
-                nav.classList.add('text-gray-500');
-            });
-            document.getElementById(pageId).classList.remove('hidden');
-            const activeNav = document.getElementById(`nav-${pageId.split('-')[0]}`);
-            activeNav.classList.add('active-nav-bg', 'active-nav');
-            activeNav.classList.remove('text-gray-500');
-            if (pageId === 'portfolio-page') {
-                renderPortfolio(currentFilter);
-            } else if (pageId === 'dashboard-page') {
-                renderDashboard();
-            } else if (pageId === 'transactions-page') {
-                renderTransactions();
-            }
-        };
-        
-        const groupHoldingsByTicker = (transactions) => {
-            const holdings = {};
-            transactions.sort((a, b) => a.timestamp - b.timestamp);
-            
-            transactions.forEach(tx => {
-                const ticker = tx.ticker.toUpperCase();
-                if (!holdings[ticker]) {
-                    holdings[ticker] = {
-                        ticker: ticker,
-                        market: tx.market,
-                        assetType: tx.assetType,
-                        totalShares: 0,
-                        totalCost: 0,
-                        transactions: []
-                    };
-                }
-                
-                // If the transaction is a sell, it needs to be subtracted from the total shares and total cost
-                if (tx.type === 'Buy') {
-                    holdings[ticker].totalShares += tx.shares;
-                    holdings[ticker].totalCost += tx.shares * tx.price;
-                } else if (tx.type === 'Sell') {
-                    // Deduct shares and update total cost based on the average cost
-                    const avgCostPerShare = holdings[ticker].totalShares > 0 ? holdings[ticker].totalCost / holdings[ticker].totalShares : 0;
-                    holdings[ticker].totalShares -= tx.shares;
-                    holdings[ticker].totalCost -= tx.shares * avgCostPerShare;
-                    // Ensure values don't go negative due to floating point inaccuracies
-                    if (holdings[ticker].totalShares < 1e-6) holdings[ticker].totalShares = 0;
-                    if (holdings[ticker].totalCost < 1e-6) holdings[ticker].totalCost = 0;
-                }
-                holdings[ticker].transactions.push(tx);
-            });
-            
-            // Filter out holdings with 0 shares
-            const filteredHoldings = Object.values(holdings).filter(holding => holding.totalShares > 0);
-            
-            // Calculate current value and gain/loss (using a simple random price for demo)
-            filteredHoldings.forEach(holding => {
-                // Generate a realistic-looking random price
-                const avgPrice = holding.totalCost / holding.totalShares;
-                const dailyChange = (Math.random() - 0.5) * avgPrice * 0.1; // +/- 5%
-                const currentPrice = avgPrice + dailyChange;
-                holding.currentValue = holding.totalShares * currentPrice;
-                holding.unrealizedGainLoss = holding.currentValue - holding.totalCost;
-                holding.gainLossPercent = holding.totalCost > 0 ? (holding.unrealizedGainLoss / holding.totalCost) * 100 : 0;
-            });
-            
-            return filteredHoldings.reduce((acc, holding) => {
-                acc[holding.ticker] = holding;
-                return acc;
-            }, {});
-        };
-        
-        const renderAllViews = () => {
-            renderDashboard();
-            renderPortfolio(currentFilter);
-            renderTransactions();
-        };
+        // --- Helper Functions ---
+        const showLoading = () => loadingSpinner.classList.remove('hidden');
+        const hideLoading = () => loadingSpinner.classList.add('hidden');
+        const showAuthModal = () => authModal.classList.remove('hidden');
+        const hideAuthModal = () => authModal.classList.add('hidden');
+        const showAppContainer = () => appContainer.classList.remove('hidden');
+        const hideAppContainer = () => appContainer.classList.add('hidden');
+        const showInvestmentModal = () => investmentModal.classList.remove('hidden');
+        const hideInvestmentModal = () => investmentModal.classList.add('hidden');
+        const showDetailsModal = () => detailsModal.classList.remove('hidden');
+        const hideDetailsModal = () => detailsModal.classList.add('hidden');
+        const showAiModal = () => aiResponseModal.classList.remove('hidden');
+        const hideAiModal = () => aiResponseModal.classList.add('hidden');
 
-        const renderDashboard = () => {
-            const holdingsArray = Object.values(groupedHoldings);
-            const totalValue = holdingsArray.reduce((sum, h) => sum + (h.currentValue || 0), 0);
-            const totalCost = holdingsArray.reduce((sum, h) => sum + (h.totalCost || 0), 0);
-            const overallGainLoss = totalValue - totalCost;
-            const overallGainLossPct = totalCost > 0 ? (overallGainLoss / totalCost) * 100 : 0;
-            
-            totalValueEl.textContent = formatCurrency(totalValue);
-            overallGainLossEl.textContent = formatCurrency(overallGainLoss);
-            overallGainLossPctEl.textContent = `(${overallGainLossPct.toFixed(2)}%)`;
-            overallGainLossEl.classList.toggle('text-green-600', overallGainLoss >= 0);
-            overallGainLossEl.classList.toggle('text-red-600', overallGainLoss < 0);
-            overallGainLossPctEl.classList.toggle('text-green-500', overallGainLossPct >= 0);
-            overallGainLossPctEl.classList.toggle('text-red-500', overallGainLossPct < 0);
-            
-            // Dummy calculations for TWR and MWR
-            const twr = Math.random() * 15 - 5; // -5% to 10%
-            const mwr = Math.random() * 15 - 5; // -5% to 10%
-            twrValueEl.textContent = `${twr.toFixed(2)}%`;
-            mwrValueEl.textContent = `${mwr.toFixed(2)}%`;
+        const formatCurrency = (value) => {
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            });
+            return formatter.format(value);
+        };
 
-            // Render Allocation Chart
-            renderAllocationChart(holdingsArray);
-        };
-        
-        const renderAllocationChart = (holdings) => {
-            const allocationData = holdings.map(h => ({
-                label: h.ticker,
-                value: h.currentValue
-            })).sort((a,b) => b.value - a.value);
-            
-            if (allocationData.length === 0) {
-                chartPlaceholder.classList.remove('hidden');
-                document.getElementById('allocation-chart').classList.add('hidden');
-                return;
-            } else {
-                chartPlaceholder.classList.add('hidden');
-                document.getElementById('allocation-chart').classList.remove('hidden');
-            }
+        const showMessageBox = (message, isConfirm = false, onConfirm = () => {}) => {
+            messageBoxText.textContent = message;
+            messageBoxActions.innerHTML = '';
+            
+            const okBtn = document.createElement('button');
+            okBtn.textContent = 'OK';
+            okBtn.className = 'bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200';
+            okBtn.onclick = () => messageBox.classList.add('hidden');
+            messageBoxActions.appendChild(okBtn);
 
-            const labels = allocationData.map(d => d.label);
-            const values = allocationData.map(d => d.value);
-            const colors = ['#4F46E5', '#6366F1', '#818CF8', '#A5B4FC', '#C7D2FE', '#E0E7FF'];
-            const backgroundColors = labels.map((_, i) => colors[i % colors.length]);
+            if (isConfirm) {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.className = 'bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors duration-200';
+                cancelBtn.onclick = () => messageBox.classList.add('hidden');
+                messageBoxActions.prepend(cancelBtn);
 
-            if (allocationChart) {
-                allocationChart.data.labels = labels;
-                allocationChart.data.datasets[0].data = values;
-                allocationChart.data.datasets[0].backgroundColor = backgroundColors;
-                allocationChart.update();
-            } else {
-                allocationChart = new Chart(allocationChartCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: values,
-                            backgroundColor: backgroundColors,
-                            hoverOffset: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'right',
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const label = context.label || '';
-                                        const value = context.parsed;
-                                        return `${label}: ${formatCurrency(value)}`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        };
-        
-        const renderPortfolio = (filter) => {
-            investmentsList.innerHTML = '';
-            const filteredHoldings = Object.values(groupedHoldings).filter(h => filter === 'all' || h.market === filter || h.assetType === filter);
-            
-            if (filteredHoldings.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                filteredHoldings.forEach(holding => {
-                    const card = document.createElement('div');
-                    card.className = "bg-white p-4 rounded-xl shadow border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors duration-200";
-                    card.dataset.ticker = holding.ticker;
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="font-bold text-lg text-gray-800">${holding.ticker}</span>
-                                <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${holding.market}</span>
-                                <span class="text-xs font-semibold px-2 py-1 rounded-full bg-blue-200 text-blue-800">${holding.assetType}</span>
-                            </div>
-                            <p class="text-sm text-gray-500 mt-1">${holding.totalShares.toFixed(2)} shares</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-bold text-lg text-gray-800">${formatCurrency(holding.currentValue)}</p>
-                            <p class="text-sm font-semibold mt-1 ${holding.unrealizedGainLoss >= 0 ? 'text-green-600' : 'text-red-600'}">
-                                ${formatCurrency(holding.unrealizedGainLoss)} (${holding.gainLossPercent.toFixed(2)}%)
-                            </p>
-                        </div>
-                    `;
-                    card.addEventListener('click', () => showDetailsModal(holding.ticker));
-                    investmentsList.appendChild(card);
-                });
-            }
-            
-            filterBtns.forEach(btn => {
-                btn.classList.remove('bg-indigo-200', 'text-indigo-800');
-                btn.classList.add('bg-gray-200', 'text-gray-700');
-                if (btn.dataset.filter === filter) {
-                    btn.classList.remove('bg-gray-200', 'text-gray-700');
-                    btn.classList.add('bg-indigo-200', 'text-indigo-800');
-                }
-            });
-        };
-        
-        const renderTransactions = () => {
-            transactionsList.innerHTML = '';
-            const sortedTransactions = transactionsData.sort((a, b) => b.timestamp - a.timestamp);
-            
-            if (sortedTransactions.length === 0) {
-                emptyTransactionsState.classList.remove('hidden');
-            } else {
-                emptyTransactionsState.classList.add('hidden');
-                sortedTransactions.forEach(tx => {
-                    const transactionItem = document.createElement('div');
-                    transactionItem.className = "bg-white p-4 rounded-xl shadow border border-gray-100 flex items-center justify-between";
-                    const isBuy = tx.type === 'Buy';
-                    transactionItem.innerHTML = `
-                        <div>
-                            <p class="font-bold text-lg text-gray-800">${tx.ticker.toUpperCase()}</p>
-                            <p class="text-sm text-gray-500">${tx.timestamp.toLocaleDateString()}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-semibold text-base ${isBuy ? 'text-green-600' : 'text-red-600'}">${isBuy ? 'Bought' : 'Sold'}: ${tx.shares.toFixed(2)} shares</p>
-                            <p class="text-sm text-gray-700">@ ${formatCurrency(tx.price)}</p>
-                        </div>
-                    `;
-                    transactionsList.appendChild(transactionItem);
-                });
-            }
-        };
+                okBtn.onclick = () => {
+                    onConfirm();
+                    messageBox.classList.add('hidden');
+                };
+            }
+            messageBox.classList.remove('hidden');
+        };
 
-        const showDetailsModal = (ticker) => {
-            currentInvestment = groupedHoldings[ticker];
-            if (!currentInvestment) return;
-            
-            detailsModalTitle.textContent = `${currentInvestment.ticker.toUpperCase()} (${currentInvestment.market}) - ${currentInvestment.assetType}`;
-            detailsSharesEl.textContent = currentInvestment.totalShares.toFixed(2);
-            detailsBuyPriceEl.textContent = formatCurrency(currentInvestment.totalCost / currentInvestment.totalShares);
-            detailsTotalCostEl.textContent = formatCurrency(currentInvestment.totalCost);
-            detailsCurrentValueEl.textContent = formatCurrency(currentInvestment.currentValue);
-            
-            const gainLoss = currentInvestment.unrealizedGainLoss;
-            detailsGainLossEl.textContent = `${formatCurrency(gainLoss)} (${currentInvestment.gainLossPercent.toFixed(2)}%)`;
-            detailsGainLossEl.classList.toggle('text-green-600', gainLoss >= 0);
-            detailsGainLossEl.classList.toggle('text-red-600', gainLoss < 0);
-            
-            // Render transaction history for this ticker
-            renderTickerTransactions(currentInvestment.transactions);
-            renderPriceChart(currentInvestment.transactions);
-            
-            showModal(detailsModal);
-        };
-        
-        const renderTickerTransactions = (transactions) => {
-            detailsTransactionsList.innerHTML = '';
-            if (transactions.length === 0) {
-                emptyDetailsTransactionsState.classList.remove('hidden');
-                return;
-            }
-            emptyDetailsTransactionsState.classList.add('hidden');
-            
-            const sortedTxs = transactions.sort((a,b) => b.timestamp - a.timestamp);
-            sortedTxs.forEach(tx => {
-                const txEl = document.createElement('div');
-                txEl.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between';
-                txEl.innerHTML = `
-                    <div>
-                        <p class="text-sm font-semibold">${tx.type} ${tx.shares.toFixed(2)} shares @ ${formatCurrency(tx.price)}</p>
-                        <p class="text-xs text-gray-500">${tx.timestamp.toLocaleDateString()}</p>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button class="edit-btn text-indigo-600 hover:text-indigo-800 transition-colors duration-200" data-id="${tx.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-7.793 7.793a1 1 0 01-.39.293l-4 1a1 1 0 01-1.217-1.217l1-4a1 1 0 01.293-.39l7.793-7.793z" />
-                                <path fill-rule="evenodd" d="M2 17a1 1 0 011-1h.01a1 1 0 011 1v.01a1 1 0 01-1 1H3a1 1 0 01-1-1v-.01zM7 17a1 1 0 011-1h.01a1 1 0 011 1v.01a1 1 0 01-1 1H8a1 1 0 01-1-1v-.01zM12 17a1 1 0 011-1h.01a1 1 0 011 1v.01a1 1 0 01-1 1h-1a1 1 0 01-1-1v-.01z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                        <button class="delete-tx-btn text-red-600 hover:text-red-800 transition-colors duration-200" data-id="${tx.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </div>
-                `;
-                detailsTransactionsList.appendChild(txEl);
-            });
-            
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const txId = e.currentTarget.dataset.id;
-                    const transaction = transactionsData.find(tx => tx.id === txId);
-                    if (transaction) {
-                        editTransaction(transaction);
-                    }
-                });
-            });
-            
-            document.querySelectorAll('.delete-tx-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const txId = e.currentTarget.dataset.id;
-                    showMessageBox('Are you sure you want to delete this transaction?', 'confirm', () => deleteTransaction(txId));
-                });
-            });
-        };
-        
-        const renderPriceChart = (transactions) => {
-            if (priceChart) {
-                priceChart.destroy();
-            }
-            
-            const txPoints = transactions.map(tx => ({
-                x: tx.timestamp,
-                y: tx.price
-            })).sort((a,b) => a.x - b.x);
-            
-            if (txPoints.length === 0) {
-                return;
-            }
-            
-            // Generate dummy price data
-            const priceData = [];
-            const startDate = txPoints[0].x;
-            const today = new Date();
-            let currentDate = new Date(startDate);
-            let currentPrice = txPoints[0].y;
-            
-            while(currentDate <= today) {
-                const txOnDay = txPoints.find(p => p.x.toDateString() === currentDate.toDateString());
-                if (txOnDay) {
-                    currentPrice = txOnDay.y;
-                }
-                priceData.push({ x: currentDate.toISOString().split('T')[0], y: currentPrice + (Math.random() - 0.5) * currentPrice * 0.05 });
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-            
-            priceChart = new Chart(priceChartCtx, {
-                type: 'line',
-                data: {
-                    datasets: [{
-                        label: 'Simulated Price History',
-                        data: priceData,
-                        borderColor: '#4F46E5',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: { unit: 'day' },
-                            display: false // Hide x-axis labels
-                        },
-                        y: {
-                            beginAtZero: false
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
-        };
-        
-        // --- Event Listeners ---
-        
-        // Auth Modal Logic
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoading(true);
-            const email = authEmailInput.value;
-            const password = authPasswordInput.value;
-            const isSignUp = authModalTitle.textContent.includes('Sign up');
-            
-            try {
-                if (isSignUp) {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                } else {
-                    await signInWithEmailAndPassword(auth, email, password);
-                }
-                hideModal(authModal);
-            } catch (error) {
-                console.error("Auth error:", error.message);
-                showMessageBox(`Error: ${error.message}`, 'error');
-            } finally {
-                showLoading(false);
-            }
-        });
-        
-        authToggleLink.addEventListener('click', () => {
-            const isSignUp = authModalTitle.textContent.includes('Sign up');
-            if (isSignUp) {
-                authModalTitle.textContent = 'Sign in';
-                authSubmitBtn.textContent = 'Sign in';
-                authToggleLink.innerHTML = 'Don\'t have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign up</span>';
-            } else {
-                authModalTitle.textContent = 'Sign up';
-                authSubmitBtn.textContent = 'Sign up';
-                authToggleLink.innerHTML = 'Already have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign in</span>';
-            }
-        });
+        const calculateCurrentPrice = (avgPrice) => {
+            // This is a simple mock function. In a real app, you would fetch this from a live API.
+            const volatility = 0.1; // 10% volatility
+            const randomFactor = (Math.random() - 0.5) * 2 * volatility;
+            return avgPrice * (1 + randomFactor);
+        };
 
-        logoutBtn.addEventListener('click', async () => {
-            showLoading(true);
-            try {
-                await signOut(auth);
-                showMessageBox('Logged out successfully.');
-            } catch (error) {
-                console.error("Logout error:", error);
-                showMessageBox('Failed to log out.');
-            } finally {
-                showLoading(false);
-            }
-        });
-        
-        navItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const pageId = item.id.replace('nav-', '') + '-page';
-                showPage(pageId);
-            });
-        });
-        
-        addInvestmentBtn.addEventListener('click', () => {
-            investmentForm.reset();
-            currentTxType = 'Buy';
-            togglePriceInputs();
-            modalTitle.textContent = 'Add New Transaction';
-            transactionIdInput.value = '';
-            const today = new Date().toISOString().split('T')[0];
-            transactionDateInput.value = today;
-            showModal(investmentModal);
-        });
-        
-        closeModalBtn.addEventListener('click', () => hideModal(investmentModal));
-        closeDetailsModalBtn.addEventListener('click', () => hideModal(detailsModal));
-        closeAiModalBtn.addEventListener('click', () => hideModal(aiResponseModal));
+        const groupHoldingsByTicker = (transactions) => {
+            const holdings = {};
+            transactions.sort((a, b) => a.timestamp - b.timestamp);
 
-        typeBuyBtn.addEventListener('click', () => {
-            currentTxType = 'Buy';
-            togglePriceInputs();
-        });
-        
-        typeSellBtn.addEventListener('click', () => {
-            currentTxType = 'Sell';
-            togglePriceInputs();
-        });
+            transactions.forEach(tx => {
+                const ticker = tx.ticker.toUpperCase();
+                if (!holdings[ticker]) {
+                    holdings[ticker] = {
+                        ticker: ticker,
+                        market: tx.market,
+                        assetType: tx.assetType,
+                        totalShares: 0,
+                        totalCost: 0,
+                        buyTransactions: [],
+                        sellTransactions: [],
+                        cashFlows: []
+                    };
+                }
 
-        const togglePriceInputs = () => {
-            typeBuyBtn.classList.toggle('bg-indigo-600', currentTxType === 'Buy');
-            typeBuyBtn.classList.toggle('text-white', currentTxType === 'Buy');
-            typeBuyBtn.classList.toggle('bg-gray-200', currentTxType === 'Sell');
-            typeBuyBtn.classList.toggle('text-gray-700', currentTxType === 'Sell');
-            typeBuyBtn.classList.toggle('hover:bg-gray-300', currentTxType === 'Sell');
-            
-            typeSellBtn.classList.toggle('bg-indigo-600', currentTxType === 'Sell');
-            typeSellBtn.classList.toggle('text-white', currentTxType === 'Sell');
-            typeSellBtn.classList.toggle('bg-gray-200', currentTxType === 'Buy');
-            typeSellBtn.classList.toggle('text-gray-700', currentTxType === 'Buy');
-            typeSellBtn.classList.toggle('hover:bg-gray-300', currentTxType === 'Buy');
-            
-            buyPriceGroup.classList.toggle('hidden', currentTxType === 'Sell');
-            sellPriceGroup.classList.toggle('hidden', currentTxType === 'Buy');
-            buyPriceInput.required = currentTxType === 'Buy';
-            sellPriceInput.required = currentTxType === 'Sell';
-        };
-        
-        investmentForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoading(true);
-            
-            const shares = parseFloat(sharesInput.value);
-            const price = currentTxType === 'Buy' ? parseFloat(buyPriceInput.value) : parseFloat(sellPriceInput.value);
-            const timestamp = new Date(transactionDateInput.value);
-            
-            if (isNaN(shares) || isNaN(price)) {
-                showMessageBox('Please enter valid numbers for shares and price.');
-                showLoading(false);
-                return;
-            }
-            
-            const newTransaction = {
-                type: currentTxType,
-                market: marketSelect.value,
-                assetType: assetTypeSelect.value,
-                ticker: tickerInput.value.toUpperCase(),
-                shares: shares,
-                price: price,
-                timestamp: timestamp
-            };
-            
-            try {
-                if (transactionIdInput.value) {
-                    await updateTransaction(transactionIdInput.value, newTransaction);
-                } else {
-                    await addTransaction(newTransaction);
-                }
-                hideModal(investmentModal);
-            } catch (error) {
-                console.error("Error saving transaction:", error);
-                showMessageBox('Failed to save transaction. Please try again.');
-            } finally {
-                showLoading(false);
-            }
-        });
+                holdings[ticker].cashFlows.push({
+                    date: tx.timestamp,
+                    amount: (tx.type === 'Buy' ? -1 : 1) * (tx.shares * (tx.price || tx.buyPrice || tx.sellPrice))
+                });
+                
+                if (tx.type === 'Buy') {
+                    holdings[ticker].totalShares += tx.shares;
+                    holdings[ticker].totalCost += tx.shares * tx.price;
+                    holdings[ticker].buyTransactions.push(tx);
+                } else if (tx.type === 'Sell') {
+                    holdings[ticker].totalShares -= tx.shares;
+                    // Adjust totalCost on sell. This is a simple approximation.
+                    const avgCost = holdings[ticker].totalCost / (holdings[ticker].totalShares + tx.shares);
+                    holdings[ticker].totalCost -= tx.shares * avgCost;
+                    holdings[ticker].sellTransactions.push(tx);
+                }
+            });
 
-        const editTransaction = (transaction) => {
-            modalTitle.textContent = 'Edit Transaction';
-            transactionIdInput.value = transaction.id;
-            transactionDateInput.value = transaction.timestamp.toISOString().split('T')[0];
-            tickerInput.value = transaction.ticker;
-            sharesInput.value = transaction.shares;
-            marketSelect.value = transaction.market;
-            assetTypeSelect.value = transaction.assetType;
-            currentTxType = transaction.type;
-            togglePriceInputs();
-            if (currentTxType === 'Buy') {
-                buyPriceInput.value = transaction.price;
-            } else {
-                sellPriceInput.value = transaction.price;
-            }
-            hideModal(detailsModal);
-            showModal(investmentModal);
-        };
+            // Calculate average price and remove tickers with zero shares
+            const filteredHoldings = {};
+            for (const ticker in holdings) {
+                if (holdings[ticker].totalShares > 0) {
+                    const holding = holdings[ticker];
+                    holding.avgPrice = holding.totalCost / holding.totalShares;
+                    holding.currentPrice = calculateCurrentPrice(holding.avgPrice);
+                    holding.currentValue = holding.totalShares * holding.currentPrice;
+                    holding.gainLoss = holding.currentValue - holding.totalCost;
+                    filteredHoldings[ticker] = holding;
+                }
+            }
+            return filteredHoldings;
+        };
 
-        deleteDataBtn.addEventListener('click', () => {
-            showMessageBox('This will permanently delete ALL of your investment data. Are you sure?', 'confirm', deleteAllData);
-        });
+        const calculateTWR = (transactions) => {
+            if (transactions.length === 0) return 0;
 
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                currentFilter = btn.dataset.filter;
-                renderPortfolio(currentFilter);
-            });
-        });
-        
-        getAiInsightsBtn.addEventListener('click', async () => {
-            showModal(aiResponseModal);
-            aiResponseContent.innerHTML = `
-                <div class="flex items-center justify-center">
-                    <div class="animate-spin rounded-full h-8 w-8 border-2 border-t-2 border-blue-500 border-opacity-75"></div>
-                </div>
-            `;
+            let twr = 1;
+            let timePeriods = [];
+            
+            // Sort transactions by date
+            const sortedTransactions = [...transactions].sort((a, b) => a.timestamp - b.timestamp);
 
-            const holdingsData = JSON.stringify(Object.values(groupedHoldings).map(h => ({
-                ticker: h.ticker,
-                shares: h.totalShares,
-                market: h.market,
-                assetType: h.assetType,
-                unrealizedGainLoss: h.unrealizedGainLoss
-            })));
-            
-            const userPrompt = `Provide a concise portfolio summary and some general advice based on the following investment holdings: ${holdingsData}. Focus on diversification, performance, and risk. Format the response using markdown headings and bullet points.`;
-            const systemPrompt = "You are a financial advisor. Analyze the provided portfolio data and offer a brief, insightful summary and actionable advice. Do not mention that the data is simulated.";
-            
-            const apiKey = ""
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            let lastDate = sortedTransactions[0].timestamp;
+            let portfolioValue = 0;
+            
+            // Initial investment
+            if (sortedTransactions[0].type === 'Buy') {
+                 portfolioValue += sortedTransactions[0].shares * sortedTransactions[0].price;
+            }
 
-            const payload = {
-                contents: [{ parts: [{ text: userPrompt }] }],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-            };
-            
-            let response;
-            let retries = 0;
-            const maxRetries = 3;
-            while (retries < maxRetries) {
-                try {
-                    response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (response.ok) {
-                        break;
-                    } else if (response.status === 429) {
-                        retries++;
-                        const delay = Math.pow(2, retries) * 1000;
-                        await new Promise(res => setTimeout(res, delay));
-                    } else {
-                        throw new Error(`API error: ${response.statusText}`);
-                    }
-                } catch (error) {
-                    console.error("Fetch error:", error);
-                    retries++;
-                    const delay = Math.pow(2, retries) * 1000;
-                    await new Promise(res => setTimeout(res, delay));
-                }
-            }
-            
-            if (!response || !response.ok) {
-                aiResponseContent.innerHTML = `<p class="text-red-500 text-center">Failed to get AI insights. Please try again later.</p>`;
-                return;
-            }
-            
-            const result = await response.json();
-            const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "No insights available.";
-            aiResponseContent.innerHTML = marked.parse(text);
-        });
-        
-        // --- Initial Setup ---
-        const initApp = () => {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    userIdDisplay.textContent = `User: ${userId.substring(0, 8)}...`;
-                    profileUserIdDisplay.textContent = userId;
-                    appContainer.classList.remove('hidden');
-                    hideModal(authModal);
-                    listenForTransactions();
-                } else {
-                    userId = null;
-                    appContainer.classList.add('hidden');
-                    showModal(authModal);
-                    // Optionally clear app data
-                    transactionsData = [];
-                    groupedHoldings = {};
-                    renderAllViews();
-                }
-                showLoading(false);
-            });
-            
-            // Sign in with custom token if available, otherwise sign in anonymously
-            if (initialAuthToken) {
-                await signInWithCustomToken(auth, initialAuthToken).catch(error => {
-                    console.error("Custom token sign-in failed. Signing in anonymously...", error);
-                    signInAnonymously(auth);
-                });
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
-        
-        // Check for window load to start the app
-        window.onload = () => {
-            initApp();
-        };
-    </script>
+            for (let i = 1; i < sortedTransactions.length; i++) {
+                const currentDate = sortedTransactions[i].timestamp;
+                const tx = sortedTransactions[i];
+                const daysPassed = (currentDate - lastDate) / (1000 * 60 * 60 * 24);
+
+                // Assuming daily compounding for simplicity
+                const returnRate = (calculateCurrentPrice(portfolioValue/1) / portfolioValue) - 1;
+                twr *= (1 + returnRate);
+
+                if (tx.type === 'Buy') {
+                    portfolioValue += tx.shares * tx.price;
+                } else if (tx.type === 'Sell') {
+                    portfolioValue -= tx.shares * tx.price;
+                }
+
+                lastDate = currentDate;
+            }
+
+            // Final period calculation
+            const finalValue = Object.values(groupedHoldings).reduce((sum, h) => sum + h.currentValue, 0);
+            if (portfolioValue > 0) {
+                 const finalReturn = (finalValue / portfolioValue) - 1;
+                 twr *= (1 + finalReturn);
+            }
+           
+            return (twr - 1) * 100;
+        };
+        
+        const calculateMWR = (transactions) => {
+            if (transactions.length === 0) return 0;
+            const cashFlows = transactions.map(tx => ({
+                date: tx.timestamp,
+                amount: (tx.type === 'Buy' ? -1 : 1) * (tx.shares * tx.price)
+            })).sort((a,b) => a.date - b.date);
+
+            const finalValue = Object.values(groupedHoldings).reduce((sum, h) => sum + h.currentValue, 0);
+            if (finalValue > 0) {
+                cashFlows.push({ date: new Date(), amount: finalValue });
+            }
+
+            // Simplified IRR calculation, not precise but demonstrates the concept
+            const irr = (rate) => {
+                let npv = 0;
+                const today = new Date();
+                cashFlows.forEach(cf => {
+                    const days = (today - cf.date) / (1000 * 60 * 60 * 24);
+                    npv += cf.amount / Math.pow(1 + rate, days / 365);
+                });
+                return npv;
+            };
+
+            // Newton-Raphson method for finding IRR
+            let rate = 0.1;
+            for (let i = 0; i < 20; i++) {
+                const npv = irr(rate);
+                const derivative = (irr(rate + 0.0001) - npv) / 0.0001;
+                rate = rate - npv / derivative;
+            }
+            return rate * 100;
+        };
+
+        const renderPortfolio = (holdings) => {
+            investmentsList.innerHTML = '';
+            const filteredHoldings = Object.values(holdings).filter(h => {
+                if (currentFilter === 'all') return true;
+                if (currentFilter === 'Stock' || currentFilter === 'ETF') return h.assetType === currentFilter;
+                return h.market === currentFilter;
+            });
+
+            if (filteredHoldings.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                filteredHoldings.forEach(holding => {
+                    const gainLoss = holding.currentValue - holding.totalCost;
+                    const gainLossPct = (gainLoss / holding.totalCost) * 100;
+                    const gainLossColor = gainLoss >= 0 ? 'text-green-600' : 'text-red-600';
+
+                    const itemHtml = `
+                        <div class="bg-gray-50 p-4 rounded-xl shadow border border-gray-100 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800">${holding.ticker} <span class="text-sm font-medium text-gray-500">(${holding.assetType})</span></h3>
+                                <p class="text-sm text-gray-500">${holding.market}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-medium text-gray-700">Shares: ${holding.totalShares.toFixed(2)}</p>
+                                <p class="text-sm font-medium text-gray-700">Value: ${formatCurrency(holding.currentValue)}</p>
+                                <p class="font-bold ${gainLossColor}">${gainLoss >= 0 ? '+' : ''}${formatCurrency(gainLoss)} (${gainLossPct.toFixed(2)}%)</p>
+                            </div>
+                            <button class="details-btn bg-blue-500 text-white px-3 py-1 rounded-lg text-sm" data-ticker="${holding.ticker}">Details</button>
+                        </div>
+                    `;
+                    investmentsList.innerHTML += itemHtml;
+                });
+            }
+        };
+
+        const renderTransactions = (transactions) => {
+            transactionsList.innerHTML = '';
+            if (transactions.length === 0) {
+                emptyTransactionsState.classList.remove('hidden');
+                return;
+            }
+            emptyTransactionsState.classList.add('hidden');
+
+            transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(tx => {
+                const price = tx.price || tx.buyPrice || tx.sellPrice;
+                const typeColor = tx.type === 'Buy' ? 'text-green-600' : 'text-red-600';
+                const typeBg = tx.type === 'Buy' ? 'bg-green-100' : 'bg-red-100';
+                const icon = tx.type === 'Buy' ? '&#x2B06;&#xFE0F;' : '&#x2B07;&#xFE0F;';
+                const itemHtml = `
+                    <div class="bg-gray-50 p-4 rounded-xl shadow border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">${tx.timestamp.toLocaleDateString()}</p>
+                            <h3 class="text-lg font-bold text-gray-800">${tx.ticker.toUpperCase()}</h3>
+                            <p class="text-sm text-gray-700">${tx.shares} shares @ ${formatCurrency(price)}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-semibold ${typeColor} ${typeBg} px-2 py-1 rounded-full">${tx.type}</span>
+                            <p class="text-lg font-bold text-gray-800">${formatCurrency(tx.shares * price)}</p>
+                        </div>
+                    </div>
+                `;
+                transactionsList.innerHTML += itemHtml;
+            });
+        };
+
+        const renderDashboard = () => {
+            const totalValue = Object.values(groupedHoldings).reduce((sum, h) => sum + h.currentValue, 0);
+            const totalCost = Object.values(groupedHoldings).reduce((sum, h) => sum + h.totalCost, 0);
+            const overallGainLoss = totalValue - totalCost;
+            const overallGainLossPct = totalCost > 0 ? (overallGainLoss / totalCost) * 100 : 0;
+            const gainLossColor = overallGainLoss >= 0 ? 'text-green-600' : 'text-red-600';
+
+            totalValueEl.textContent = formatCurrency(totalValue);
+            overallGainLossEl.textContent = `${overallGainLoss >= 0 ? '+' : ''}${formatCurrency(overallGainLoss)}`;
+            overallGainLossEl.className = `text-4xl font-bold ${gainLossColor}`;
+            overallGainLossPctEl.textContent = ` (${overallGainLossPct.toFixed(2)}%)`;
+            overallGainLossPctEl.className = `${gainLossColor} text-sm font-medium`;
+
+            const twr = calculateTWR(transactionsData);
+            const mwr = calculateMWR(transactionsData);
+            twrValueEl.textContent = `${twr.toFixed(2)}%`;
+            mwrValueEl.textContent = `${mwr.toFixed(2)}%`;
+            
+            updateAllocationChart();
+        };
+        
+        const renderAllViews = () => {
+            renderDashboard();
+            renderPortfolio(groupedHoldings);
+            renderTransactions(transactionsData);
+        };
+        
+        const updateAllocationChart = () => {
+            const labels = Object.keys(groupedHoldings);
+            const data = labels.map(ticker => groupedHoldings[ticker].currentValue);
+            
+            if (data.length === 0) {
+                if (allocationChart) {
+                    allocationChart.destroy();
+                    allocationChart = null;
+                }
+                chartPlaceholder.classList.remove('hidden');
+                document.getElementById('allocation-chart').classList.add('hidden');
+                return;
+            }
+
+            chartPlaceholder.classList.add('hidden');
+            document.getElementById('allocation-chart').classList.remove('hidden');
+
+            const backgroundColors = [
+                '#4f46e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
+                '#6366f1', '#2563eb', '#059669', '#d97706', '#dc2626'
+            ];
+
+            const chartData = {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    hoverOffset: 4
+                }]
+            };
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                const total = tooltipItem.dataset.data.reduce((sum, val) => sum + val, 0);
+                                const value = tooltipItem.raw;
+                                const percentage = ((value / total) * 100).toFixed(2);
+                                return `${tooltipItem.label}: ${formatCurrency(value)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            };
+            
+            if (allocationChart) {
+                allocationChart.data = chartData;
+                allocationChart.update();
+            } else {
+                allocationChart = new Chart(allocationChartCtx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    options: chartOptions,
+                });
+            }
+        };
+
+        const renderPriceChart = (ticker, transactions) => {
+            if (priceChart) {
+                priceChart.destroy();
+            }
+            
+            const relevantTransactions = transactions.filter(tx => tx.ticker.toUpperCase() === ticker.toUpperCase()).sort((a, b) => a.timestamp - b.timestamp);
+            
+            let cumulativeShares = 0;
+            let cumulativeCost = 0;
+            
+            const labels = [];
+            const buyPrices = [];
+            const currentPrices = [];
+            const dataPoints = [];
+            
+            relevantTransactions.forEach(tx => {
+                const price = tx.price || tx.buyPrice || tx.sellPrice;
+                if (tx.type === 'Buy') {
+                    cumulativeShares += tx.shares;
+                    cumulativeCost += tx.shares * price;
+                } else {
+                    cumulativeShares -= tx.shares;
+                    // For sell, re-calculate the cumulative cost based on average price
+                    const avgCostBeforeSell = cumulativeCost / (cumulativeShares + tx.shares);
+                    cumulativeCost -= tx.shares * avgCostBeforeSell;
+                }
+
+                dataPoints.push({
+                    x: tx.timestamp.getTime(),
+                    y: cumulativeCost / cumulativeShares || 0,
+                    label: `Avg Cost: ${formatCurrency(cumulativeCost / cumulativeShares || 0)}`
+                });
+            });
+
+            // Add the final data point for the current value
+            const holding = groupedHoldings[ticker.toUpperCase()];
+            if (holding) {
+                dataPoints.push({
+                    x: new Date().getTime(),
+                    y: holding.currentPrice,
+                    label: `Current Price: ${formatCurrency(holding.currentPrice)}`
+                });
+            }
+
+            // Create the chart
+            priceChart = new Chart(priceChartCtx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Average Buy Price',
+                            data: dataPoints,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            fill: false,
+                            tension: 0.1,
+                            segment: {
+                                borderColor: ctx => {
+                                    const index = ctx.p0DataIndex;
+                                    const nextIndex = ctx.p1DataIndex;
+                                    const isPositive = dataPoints[nextIndex].y >= dataPoints[index].y;
+                                    return isPositive ? 'rgba(16, 185, 129, 1)' : 'rgba(239, 68, 68, 1)';
+                                },
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            },
+                            ticks: {
+                                source: 'data'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Price'
+                            },
+                            beginAtZero: false
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: (tooltipItems) => new Date(tooltipItems[0].raw.x).toLocaleDateString(),
+                                label: (tooltipItem) => tooltipItem.raw.label
+                            }
+                        }
+                    }
+                }
+            });
+        };
+        
+        const getAiInsights = async () => {
+            const currentHoldings = Object.values(groupedHoldings);
+            if (currentHoldings.length === 0) {
+                showMessageBox("Please add some transactions to your portfolio before getting insights.");
+                return;
+            }
+
+            const portfolioSummary = currentHoldings.map(h => ({
+                ticker: h.ticker,
+                market: h.market,
+                assetType: h.assetType,
+                shares: h.totalShares,
+                avgPrice: h.avgPrice,
+                currentPrice: h.currentPrice,
+                gainLoss: h.gainLoss,
+                gainLossPercentage: (h.gainLoss / h.totalCost) * 100
+            }));
+            
+            const prompt = `Act as a world-class financial analyst. You are provided with a simplified JSON object representing a user's investment portfolio. Your task is to provide a concise, single-paragraph summary of the key findings. Do not include financial advice, but instead focus on the current state of the portfolio. Also, do not generate any code, tables, or lists. Just provide a single paragraph of text.
+            \n\nPortfolio data: ${JSON.stringify(portfolioSummary)}`;
+
+            aiResponseContent.innerHTML = `<div class="flex items-center justify-center"><div class="animate-spin rounded-full h-8 w-8 border-2 border-t-2 border-blue-500 border-opacity-75"></div></div>`;
+            showAiModal();
+
+            try {
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: {
+                        parts: [{ text: "Act as a world-class financial analyst. Provide a concise, single-paragraph summary of the key findings based on the provided data." }]
+                    },
+                };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "No insights could be generated at this time.";
+                
+                aiResponseContent.innerHTML = `<p>${text}</p>`;
+
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                aiResponseContent.innerHTML = `<p class="text-red-600">Failed to generate insights. Please try again later.</p>`;
+            }
+        };
+
+        // --- Event Listeners ---
+        const setupListeners = () => {
+            // Navigation
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    navItems.forEach(n => {
+                        n.classList.remove('active-nav', 'active-nav-bg');
+                        n.classList.add('text-gray-500');
+                    });
+                    item.classList.add('active-nav', 'active-nav-bg');
+                    item.classList.remove('text-gray-500');
+                    
+                    const targetPageId = item.id.replace('nav-', '') + '-page';
+                    pages.forEach(page => {
+                        page.classList.add('hidden');
+                        if (page.id === targetPageId) {
+                            page.classList.remove('hidden');
+                        }
+                    });
+                });
+            });
+
+            // Authentication
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                showLoading();
+                const email = authEmailInput.value;
+                const password = authPasswordInput.value;
+                const isSignUp = authModalTitle.textContent.includes('Sign up');
+                try {
+                    if (isSignUp) {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                    } else {
+                        await signInWithEmailAndPassword(auth, email, password);
+                    }
+                } catch (error) {
+                    console.error("Auth error:", error);
+                    showMessageBox(error.message);
+                } finally {
+                    hideLoading();
+                }
+            });
+
+            authToggleLink.addEventListener('click', () => {
+                const isSignUp = authModalTitle.textContent.includes('Sign up');
+                authModalTitle.textContent = isSignUp ? 'Sign in' : 'Sign up';
+                authSubmitBtn.textContent = isSignUp ? 'Sign in' : 'Sign up';
+                authToggleLink.innerHTML = isSignUp ? `Don't have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign up</span>` : `Already have an account? <span class="font-medium text-indigo-600 hover:text-indigo-800">Sign in</span>`;
+            });
+
+            logoutBtn.addEventListener('click', async () => {
+                await signOut(auth);
+                showMessageBox("You have been logged out.");
+            });
+
+            // Transaction Form Modal
+            addInvestmentBtn.addEventListener('click', () => {
+                modalTitle.textContent = 'Add New Transaction';
+                investmentForm.reset();
+                buyPriceGroup.classList.remove('hidden');
+                sellPriceGroup.classList.add('hidden');
+                currentTxType = 'Buy';
+                typeBuyBtn.className = 'flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-indigo-600 text-white';
+                typeSellBtn.className = 'flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300';
+                transactionIdInput.value = '';
+                showInvestmentModal();
+            });
+
+            closeModalBtn.addEventListener('click', () => hideInvestmentModal());
+
+            typeBuyBtn.addEventListener('click', () => {
+                currentTxType = 'Buy';
+                buyPriceGroup.classList.remove('hidden');
+                sellPriceGroup.classList.add('hidden');
+                typeBuyBtn.className = 'flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-indigo-600 text-white';
+                typeSellBtn.className = 'flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300';
+            });
+
+            typeSellBtn.addEventListener('click', () => {
+                currentTxType = 'Sell';
+                buyPriceGroup.classList.add('hidden');
+                sellPriceGroup.classList.remove('hidden');
+                typeSellBtn.className = 'flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-indigo-600 text-white';
+                typeBuyBtn.className = 'flex-1 py-2 rounded-lg font-medium shadow-sm transition-colors duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300';
+            });
+            
+            investmentForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                showLoading();
+                const newTransaction = {
+                    date: transactionDateInput.value,
+                    type: currentTxType,
+                    market: marketSelect.value,
+                    assetType: assetTypeSelect.value,
+                    ticker: tickerInput.value.toUpperCase(),
+                    shares: parseFloat(sharesInput.value),
+                    price: currentTxType === 'Buy' ? parseFloat(buyPriceInput.value) : parseFloat(sellPriceInput.value),
+                    timestamp: Timestamp.fromDate(new Date(transactionDateInput.value))
+                };
+                try {
+                    if (transactionIdInput.value) {
+                        await updateTransaction(transactionIdInput.value, newTransaction);
+                        showMessageBox("Transaction updated successfully!");
+                    } else {
+                        await addTransaction(newTransaction);
+                        showMessageBox("Transaction added successfully!");
+                    }
+                } catch (error) {
+                    console.error("Error saving transaction:", error);
+                    showMessageBox("Failed to save transaction.");
+                } finally {
+                    hideLoading();
+                    hideInvestmentModal();
+                }
+            });
+
+            // Details Modal
+            investmentsList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('details-btn')) {
+                    const ticker = e.target.dataset.ticker;
+                    currentInvestment = groupedHoldings[ticker.toUpperCase()];
+                    if (!currentInvestment) return;
+                    
+                    detailsModalTitle.textContent = `${ticker.toUpperCase()} (${currentInvestment.assetType}) Details`;
+                    detailsSharesEl.textContent = currentInvestment.totalShares.toFixed(2);
+                    detailsBuyPriceEl.textContent = formatCurrency(currentInvestment.avgPrice);
+                    detailsTotalCostEl.textContent = formatCurrency(currentInvestment.totalCost);
+                    detailsCurrentValueEl.textContent = formatCurrency(currentInvestment.currentValue);
+                    
+                    const gainLossColor = currentInvestment.gainLoss >= 0 ? 'text-green-600' : 'text-red-600';
+                    const gainLossText = `${currentInvestment.gainLoss >= 0 ? '+' : ''}${formatCurrency(currentInvestment.gainLoss)} (${((currentInvestment.gainLoss / currentInvestment.totalCost) * 100).toFixed(2)}%)`;
+                    detailsGainLossEl.textContent = gainLossText;
+                    detailsGainLossEl.className = `text-lg font-bold ${gainLossColor}`;
+                    
+                    // Render specific transactions for this ticker
+                    renderDetailsTransactions(ticker);
+                    renderPriceChart(ticker, transactionsData);
+                    
+                    showDetailsModal();
+                }
+            });
+
+            const renderDetailsTransactions = (ticker) => {
+                detailsTransactionsList.innerHTML = '';
+                const txns = transactionsData.filter(tx => tx.ticker.toUpperCase() === ticker.toUpperCase()).sort((a, b) => b.timestamp - a.timestamp);
+                
+                if (txns.length === 0) {
+                    emptyDetailsTransactionsState.classList.remove('hidden');
+                    return;
+                }
+                emptyDetailsTransactionsState.classList.add('hidden');
+                
+                txns.forEach(tx => {
+                    const price = tx.price || tx.buyPrice || tx.sellPrice;
+                    const itemHtml = `
+                        <div class="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">${new Date(tx.timestamp).toLocaleDateString()}</p>
+                                <p class="font-semibold text-gray-800">${tx.type} ${tx.shares} shares @ ${formatCurrency(price)}</p>
+                            </div>
+                        </div>
+                    `;
+                    detailsTransactionsList.innerHTML += itemHtml;
+                });
+            };
+
+            closeDetailsModalBtn.addEventListener('click', () => hideDetailsModal());
+
+            // Delete User Data
+            deleteDataBtn.addEventListener('click', () => {
+                showMessageBox("Are you sure you want to delete all your portfolio data? This cannot be undone.", true, deleteUserTransactions);
+            });
+            
+            // AI Insights
+            getAiInsightsBtn.addEventListener('click', getAiInsights);
+            closeAiModalBtn.addEventListener('click', () => hideAiModal());
+            
+            // Filter buttons
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(f => f.classList.remove('bg-indigo-200', 'text-indigo-800', 'font-semibold'));
+                    btn.classList.add('bg-indigo-200', 'text-indigo-800', 'font-semibold');
+                    currentFilter = btn.dataset.filter;
+                    renderPortfolio(groupedHoldings);
+                });
+            });
+        };
+
+        // --- Main App Initialization Logic ---
+        const initializeApp = async () => {
+            showLoading();
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = `User: ${userId}`;
+                        profileUserIdDisplay.textContent = userId;
+                        hideAuthModal();
+                        showAppContainer();
+                        listenForTransactions();
+                    } else {
+                        userId = null;
+                        userIdDisplay.textContent = 'Not signed in';
+                        profileUserIdDisplay.textContent = 'Not authenticated';
+                        hideAppContainer();
+                        showAuthModal();
+                        if (unsubscribe) {
+                            unsubscribe();
+                        }
+                    }
+                    hideLoading();
+                });
+                
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                showMessageBox("Failed to initialize the app. Please check your configuration.");
+                hideLoading();
+            }
+        };
+
+        // Call the main initialization function
+        window.onload = initializeApp;
+        setupListeners();
+
+    </script>
 </body>
 </html>
