@@ -609,7 +609,7 @@
         // --- Start of FMP API Integration Changes ---
         const fetchStockPrice = async (ticker) => {
             try {
-                const response = await fetch(`${fmpApiUrl}${ticker}?apikey=${fmpApiKey}`);
+                const response = await fetch(`${fmpApiUrl}${ticker}&apikey=${fmpApiKey}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
