@@ -365,9 +365,13 @@
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // API key for the Gemini API call
-        const apiKey = "YOUR_GEMINI_API_KEY";
-        const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=" + apiKey;
+        const geminiApiKey = "AIzaSyAHGq7UzAoGV6nkQl3Qk10bxRx8M7ASaKc";
+        const geminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=" + geminiApiKey;
 
+        // API key for fetching stock prices
+        const fmpApiKey = "VDgI5E3y6nTv7kwKqPMZEmctvmCyEBQk";
+        const fmpApiUrl = "https://financialmodelingprep.com/api/v3/quote-short/";
+        
         // Set log level to debug for now
         setLogLevel('debug');
         
@@ -476,8 +480,8 @@
                     });
                 });
                 transactionsData = transactions;
-                groupedHoldings = groupHoldingsByTicker(transactionsData);
-                renderAllViews();
+                // Since this is now an async operation, we need to handle it properly
+                groupHoldingsAndRender();
             }, (error) => {
                 console.error("Error fetching transactions:", error);
             });
@@ -602,12 +606,84 @@
         
         // --- UI & Rendering Functions ---
         
+        // --- Start of FMP API Integration Changes ---
+        const fetchStockPrice = async (ticker) => {
+            try {
+                const response = await fetch(`${fmpApiUrl}${ticker}?apikey=${fmpApiKey}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (data.length > 0) {
+                    // FMP returns an array, we want the first object's price
+                    return data[0].price;
+                }
+                return 0; // Return 0 if no price found
+            } catch (error) {
+                console.error(`Error fetching price for ${ticker}:`, error);
+                return 0; // Return 0 on error
+            }
+        };
+
+        const groupHoldingsAndRender = async () => {
+            const holdings = {};
+            const uniqueTickers = [...new Set(transactionsData.map(tx => tx.ticker))];
+            
+            const fetchPromises = uniqueTickers.map(async (ticker) => {
+                const price = await fetchStockPrice(ticker);
+                return { ticker, price };
+            });
+            
+            const prices = await Promise.all(fetchPromises);
+            const priceMap = new Map(prices.map(p => [p.ticker, p.price]));
+            
+            transactionsData.forEach(tx => {
+                const ticker = tx.ticker;
+                if (!holdings[ticker]) {
+                    holdings[ticker] = {
+                        ticker: ticker,
+                        market: tx.market,
+                        assetType: tx.assetType,
+                        transactions: [],
+                        totalShares: 0,
+                        totalCost: 0,
+                        averageBuyPrice: 0,
+                        currentValue: 0,
+                        currentPrice: priceMap.get(ticker) || 0 // Use the fetched price
+                    };
+                }
+                holdings[ticker].transactions.push(tx);
+                
+                const price = tx.type === 'Buy' ? tx.buyPrice : tx.sellPrice;
+                const shares = tx.shares;
+                
+                if (tx.type === 'Buy') {
+                    holdings[ticker].totalShares += shares;
+                    holdings[ticker].totalCost += shares * price;
+                } else {
+                    const averagePrice = holdings[ticker].totalCost / holdings[ticker].totalShares;
+                    holdings[ticker].totalShares -= shares;
+                    holdings[ticker].totalCost = holdings[ticker].totalShares * averagePrice;
+                }
+            });
+            
+            // Recalculate values based on new prices
+            Object.values(holdings).forEach(holding => {
+                holding.averageBuyPrice = holding.totalShares > 0 ? holding.totalCost / holding.totalShares : 0;
+                holding.currentValue = holding.totalShares * holding.currentPrice;
+            });
+            
+            groupedHoldings = holdings;
+            renderAllViews();
+        };
+
         const renderAllViews = () => {
             renderDashboard();
             renderPortfolio();
             renderTransactions();
         };
-        
+        // --- End of FMP API Integration Changes ---
+
         const renderDashboard = () => {
             const summary = calculatePortfolioSummary(transactionsData);
             totalValueEl.textContent = formatCurrency(summary.totalValue, 'US');
@@ -951,7 +1027,6 @@
         // --- Helper Functions ---
         
         const calculatePortfolioSummary = (transactions) => {
-            const holdings = groupHoldingsByTicker(transactions);
             let totalValue = 0;
             let totalCost = 0;
             let twr = 0;
@@ -960,7 +1035,7 @@
             const allocation = {};
             
             // Simplified calculation for demo purposes
-            Object.values(holdings).forEach(h => {
+            Object.values(groupedHoldings).forEach(h => {
                 totalValue += h.currentValue;
                 totalCost += h.totalCost;
                 
@@ -993,8 +1068,19 @@
             };
         };
         
-        const groupHoldingsByTicker = (transactions) => {
+        // --- START of Updated Price Logic (Replaces old 'groupHoldingsByTicker' and 'generateSimulatedPrice') ---
+        const groupHoldingsByTicker = async (transactions) => {
             const holdings = {};
+            const uniqueTickers = [...new Set(transactions.map(tx => tx.ticker))];
+            
+            // Fetch prices for all unique tickers in parallel
+            const fetchPromises = uniqueTickers.map(async (ticker) => {
+                const price = await fetchStockPrice(ticker);
+                return { ticker, price };
+            });
+            
+            const prices = await Promise.all(fetchPromises);
+            const priceMap = new Map(prices.map(p => [p.ticker, p.price]));
             
             transactions.forEach(tx => {
                 const ticker = tx.ticker;
@@ -1007,7 +1093,8 @@
                         totalShares: 0,
                         totalCost: 0,
                         averageBuyPrice: 0,
-                        currentValue: 0
+                        currentValue: 0,
+                        currentPrice: priceMap.get(ticker) || 0 // Use the fetched price
                     };
                 }
                 holdings[ticker].transactions.push(tx);
@@ -1025,25 +1112,16 @@
                 }
             });
             
-            // Calculate average buy price and current value
             Object.values(holdings).forEach(holding => {
                 holding.averageBuyPrice = holding.totalShares > 0 ? holding.totalCost / holding.totalShares : 0;
-                // Simulate current price for demo
-                const simulatedPrice = generateSimulatedPrice(holding.ticker, holding.averageBuyPrice);
-                holding.currentValue = holding.totalShares * simulatedPrice;
+                holding.currentValue = holding.totalShares * holding.currentPrice;
             });
             
             return holdings;
         };
-        
-        const generateSimulatedPrice = (ticker, basePrice) => {
-            // Simple pseudo-random price change
-            const seed = ticker.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-            const multiplier = (Math.sin(seed + Date.now() / 10000000) * 0.2) + 1; // Fluctuates +/- 20%
-            return basePrice * multiplier;
-        };
-        
+
         const generateSimulatedPriceData = (ticker) => {
+            // This function remains simulated because FMP's free plan doesn't offer historical data
             const data = [];
             const endDate = new Date();
             const basePrice = currentInvestment.averageBuyPrice;
@@ -1052,7 +1130,7 @@
                 const date = new Date(endDate);
                 date.setDate(endDate.getDate() - i);
                 const seed = ticker.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-                const multiplier = (Math.sin(seed + date.getTime() / 10000000) * 0.2) + 1;
+                const multiplier = (Math.sin(seed + date.getTime() / 10000000) * 0.2) + 1; // Fluctuates +/- 20%
                 data.push({
                     date: date.toLocaleDateString(),
                     price: basePrice * multiplier
@@ -1060,6 +1138,7 @@
             }
             return data;
         };
+        // --- END of Updated Price Logic ---
         
         const formatCurrency = (amount, market) => {
             let currency = '';
@@ -1235,7 +1314,7 @@
             aiResponseContent.innerHTML = `<div class="flex items-center justify-center"><div class="animate-spin rounded-full h-8 w-8 border-2 border-t-2 border-blue-500 border-opacity-75"></div></div>`;
             showModal(aiResponseModal);
             
-            const portfolio = groupHoldingsByTicker(transactionsData);
+            const portfolio = groupedHoldings; // Use the already fetched data
             const portfolioString = JSON.stringify(portfolio);
             
             const prompt = `You are a financial analyst. Provide a concise, clear, and actionable summary of the following investment portfolio data. Focus on key metrics, asset allocation, and potential risks or opportunities. The user is a Malaysian investor, so provide context where relevant. Keep it under 200 words.
@@ -1244,7 +1323,7 @@
             ${portfolioString}`;
             
             try {
-                const response = await fetch(apiUrl, {
+                const response = await fetch(geminiApiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
